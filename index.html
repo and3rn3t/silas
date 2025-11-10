@@ -101,6 +101,30 @@
                         <span class="stat-label">Armor:</span>
                         <span id="hero-armor">Leather Armor</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mana:</span>
+                        <span id="hero-mana">50</span>/<span id="hero-max-mana">50</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Class:</span>
+                        <span id="hero-class">🗡️ Warrior</span>
+                    </div>
+                </div>
+                
+                <!-- Battle UI (hidden by default) -->
+                <div id="battle-ui" class="battle-ui">
+                    <h3>⚔️ BATTLE ⚔️</h3>
+                    <div class="enemy-stats">
+                        <div class="enemy-info">
+                            <div id="enemy-image" class="enemy-image">👹</div>
+                            <div class="enemy-details">
+                                <div class="enemy-name" id="enemy-name">Enemy</div>
+                                <div class="enemy-hp">
+                                    HP: <span id="enemy-hp">100</span>/<span id="enemy-max-hp">100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="game-display">
@@ -116,7 +140,16 @@
                     <button class="game-btn" id="shop-btn">🏪 Shop</button>
                     <button class="game-btn" id="inventory-btn">🎒 Inventory</button>
                     <button class="game-btn" id="stats-btn">📊 Stats</button>
+                    <button class="game-btn" id="choose-class-btn">🎭 Choose Class</button>
                     <button class="game-btn" id="reset-game-btn">🔄 New Game</button>
+                </div>
+                
+                <!-- Battle Actions (hidden by default) -->  
+                <div id="battle-actions" class="battle-actions">
+                    <button class="battle-btn" id="attack-btn">⚔️ Attack</button>
+                    <button class="battle-btn" id="heavy-attack-btn">💥 Heavy Attack</button>
+                    <button class="battle-btn" id="defend-btn">🛡️ Defend</button>
+                    <button class="battle-btn" id="skills-btn">✨ Skills</button>
                 </div>
             </div>
         </section>

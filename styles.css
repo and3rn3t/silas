@@ -331,6 +331,95 @@ body {
     transform: translateY(-1px);
 }
 
+/* Battle UI */
+.battle-ui {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 3px solid #ff6b35;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    color: white;
+    display: none;
+}
+
+.battle-ui h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.enemy-stats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.enemy-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #ff6b35;
+}
+
+.enemy-image {
+    font-size: 3em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.enemy-details {
+    text-align: left;
+}
+
+.enemy-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.enemy-hp {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+/* Battle Actions */
+.battle-actions {
+    display: none;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.battle-btn {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: #ffffff;
+    border: 3px solid #ff6b35;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.battle-btn:hover {
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.battle-btn:active {
+    transform: translateY(0);
+}
+
 /* Login Section */
 .login-container {
     max-width: 500px;

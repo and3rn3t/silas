@@ -97,19 +97,29 @@ class DataManager {
             maxHp: 100,
             gold: 0,
             currentLocation: 'castle',
-            class: 'warrior',
+            class: 'warrior', // Set during character creation
             attack: 15,
             defense: 5,
             critChance: 10,
             dodgeChance: 5,
+            mana: 50,
+            maxMana: 50,
             equipment: {
                 weapon: { name: 'Iron Sword', attack: 10, rarity: 'common' },
                 armor: { name: 'Leather Armor', defense: 5, rarity: 'common' }
             },
+            skills: {
+                available: [], // Unlocked skills
+                cooldowns: {}, // Skill cooldowns
+                ultimateReady: true
+            },
             inventory: [],
             achievements: [],
             bossesDefeated: 0,
-            explorationCount: 0
+            explorationCount: 0,
+            inBattle: false,
+            currentEnemy: null,
+            battleTurn: 'player'
         };
         this.saveGameState(initialState);
     }
@@ -394,13 +404,168 @@ const equipment = {
     ]
 };
 
+const characterClasses = {
+    warrior: {
+        name: "🗡️ Warrior",
+        description: "Master of melee combat with high HP and defense",
+        bonuses: { hp: 20, attack: 5, defense: 3, mana: -10 },
+        skills: ["berserker_rage", "shield_bash", "war_cry"],
+        ultimate: "devastating_blow"
+    },
+    archer: {
+        name: "🏹 Archer", 
+        description: "Expert marksman with high critical hit chance",
+        bonuses: { hp: 0, attack: 3, defense: 0, critChance: 15, mana: 0 },
+        skills: ["multi_shot", "aimed_shot", "evasion"],
+        ultimate: "arrow_storm"
+    },
+    mage: {
+        name: "🧙‍♂️ Mage",
+        description: "Wielder of arcane magic with powerful spells",
+        bonuses: { hp: -10, attack: 2, defense: -2, mana: 30 },
+        skills: ["fireball", "heal", "magic_shield"],
+        ultimate: "meteor"
+    },
+    rogue: {
+        name: "🗡️ Rogue",
+        description: "Stealthy assassin with high dodge and critical hits",
+        bonuses: { hp: -5, attack: 4, defense: 0, critChance: 10, dodgeChance: 15, mana: 5 },
+        skills: ["backstab", "stealth", "poison_blade"],
+        ultimate: "shadow_strike"
+    }
+};
+
+const skills = {
+    // Warrior Skills
+    berserker_rage: {
+        name: "🔥 Berserker Rage",
+        description: "+50% attack for 3 turns",
+        manaCost: 15,
+        cooldown: 5,
+        effect: "buff_attack"
+    },
+    shield_bash: {
+        name: "🛡️ Shield Bash", 
+        description: "Attack that reduces enemy attack",
+        manaCost: 10,
+        cooldown: 3,
+        effect: "debuff_enemy_attack"
+    },
+    war_cry: {
+        name: "📢 War Cry",
+        description: "Intimidate enemy, reduce their accuracy",
+        manaCost: 8,
+        cooldown: 4,
+        effect: "debuff_enemy_accuracy"
+    },
+    devastating_blow: {
+        name: "💥 Devastating Blow",
+        description: "Ultimate: 300% damage attack",
+        manaCost: 30,
+        cooldown: 8,
+        effect: "ultimate_attack"
+    },
+    
+    // Archer Skills
+    multi_shot: {
+        name: "🏹 Multi Shot",
+        description: "Hit enemy 2-3 times with reduced damage",
+        manaCost: 12,
+        cooldown: 3,
+        effect: "multi_attack"
+    },
+    aimed_shot: {
+        name: "🎯 Aimed Shot",
+        description: "Guaranteed critical hit",
+        manaCost: 15,
+        cooldown: 4,
+        effect: "guaranteed_crit"
+    },
+    evasion: {
+        name: "💨 Evasion",
+        description: "+75% dodge chance for 2 turns",
+        manaCost: 10,
+        cooldown: 5,
+        effect: "buff_dodge"
+    },
+    arrow_storm: {
+        name: "🌪️ Arrow Storm",
+        description: "Ultimate: 5 attacks with increasing damage",
+        manaCost: 35,
+        cooldown: 10,
+        effect: "ultimate_multi"
+    },
+    
+    // Mage Skills
+    fireball: {
+        name: "🔥 Fireball",
+        description: "Magic damage that ignores armor",
+        manaCost: 12,
+        cooldown: 2,
+        effect: "magic_damage"
+    },
+    heal: {
+        name: "💚 Heal",
+        description: "Restore 40% of max HP",
+        manaCost: 15,
+        cooldown: 4,
+        effect: "heal_self"
+    },
+    magic_shield: {
+        name: "🔮 Magic Shield",
+        description: "Absorb next 2 attacks completely",
+        manaCost: 20,
+        cooldown: 6,
+        effect: "magic_shield"
+    },
+    meteor: {
+        name: "☄️ Meteor",
+        description: "Ultimate: Massive magic damage",
+        manaCost: 40,
+        cooldown: 12,
+        effect: "ultimate_magic"
+    },
+    
+    // Rogue Skills
+    backstab: {
+        name: "🗡️ Backstab",
+        description: "High damage with guaranteed critical",
+        manaCost: 15,
+        cooldown: 4,
+        effect: "backstab_attack"
+    },
+    stealth: {
+        name: "👤 Stealth",
+        description: "Next attack deals double damage",
+        manaCost: 12,
+        cooldown: 5,
+        effect: "stealth_buff"
+    },
+    poison_blade: {
+        name: "☠️ Poison Blade",
+        description: "Poison enemy for damage over time",
+        manaCost: 10,
+        cooldown: 3,
+        effect: "apply_poison"
+    },
+    shadow_strike: {
+        name: "🌑 Shadow Strike",
+        description: "Ultimate: Teleport attack with massive damage",
+        manaCost: 35,
+        cooldown: 10,
+        effect: "ultimate_stealth"
+    }
+};
+
 const achievements = [
     { id: "first_kill", name: "First Blood", description: "Defeat your first enemy", reward: 50 },
     { id: "explorer", name: "Explorer", description: "Explore 10 locations", reward: 100 },
     { id: "treasure_hunter", name: "Treasure Hunter", description: "Find 500 gold", reward: 200 },
     { id: "level_master", name: "Level Master", description: "Reach level 10", reward: 500 },
     { id: "dragon_slayer", name: "Dragon Slayer", description: "Defeat the Ancient Dragon", reward: 1000 },
-    { id: "boss_hunter", name: "Boss Hunter", description: "Defeat 5 boss enemies", reward: 750 }
+    { id: "boss_hunter", name: "Boss Hunter", description: "Defeat 5 boss enemies", reward: 750 },
+    { id: "skill_master", name: "Skill Master", description: "Use 50 skills in combat", reward: 300 },
+    { id: "class_master", name: "Class Master", description: "Master your chosen class", reward: 500 }
 ];
 
 function loadGame() {
@@ -423,11 +588,70 @@ function updateGameDisplay() {
     const defenseEl = document.getElementById('hero-defense');
     const weaponEl = document.getElementById('hero-weapon');
     const armorEl = document.getElementById('hero-armor');
+    const manaEl = document.getElementById('hero-mana');
+    const maxManaEl = document.getElementById('hero-max-mana');
+    const classEl = document.getElementById('hero-class');
     
     if (attackEl) attackEl.textContent = state.attack || 15;
     if (defenseEl) defenseEl.textContent = state.defense || 5;
     if (weaponEl) weaponEl.textContent = state.equipment?.weapon?.name || 'Iron Sword';
     if (armorEl) armorEl.textContent = state.equipment?.armor?.name || 'Leather Armor';
+    if (manaEl) manaEl.textContent = state.mana || 50;
+    if (maxManaEl) maxManaEl.textContent = state.maxMana || 50;
+    if (classEl) classEl.textContent = characterClasses[state.class]?.name || '🗡️ Warrior';
+    
+    // Update battle-specific UI
+    updateBattleUI(state);
+}
+
+function updateBattleUI(state) {
+    const battleUI = document.getElementById('battle-ui');
+    const gameActions = document.querySelector('.game-actions');
+    
+    if (state.inBattle && state.currentEnemy) {
+        // Show battle UI
+        if (battleUI) {
+            battleUI.style.display = 'block';
+            updateEnemyDisplay(state.currentEnemy);
+        }
+        
+        // Hide normal game actions, show battle actions
+        if (gameActions) {
+            gameActions.style.display = 'none';
+        }
+        
+        const battleActions = document.getElementById('battle-actions');
+        if (battleActions) {
+            battleActions.style.display = 'flex';
+        }
+    } else {
+        // Hide battle UI
+        if (battleUI) {
+            battleUI.style.display = 'none';
+        }
+        
+        // Show normal game actions
+        if (gameActions) {
+            gameActions.style.display = 'flex';
+        }
+        
+        const battleActions = document.getElementById('battle-actions');
+        if (battleActions) {
+            battleActions.style.display = 'none';
+        }
+    }
+}
+
+function updateEnemyDisplay(enemy) {
+    const enemyNameEl = document.getElementById('enemy-name');
+    const enemyHpEl = document.getElementById('enemy-hp');
+    const enemyMaxHpEl = document.getElementById('enemy-max-hp');
+    const enemyImageEl = document.getElementById('enemy-image');
+    
+    if (enemyNameEl) enemyNameEl.textContent = enemy.name;
+    if (enemyHpEl) enemyHpEl.textContent = enemy.currentHp || enemy.hp;
+    if (enemyMaxHpEl) enemyMaxHpEl.textContent = enemy.hp;
+    if (enemyImageEl) enemyImageEl.textContent = enemy.image;
 }
 
 function explore() {
@@ -448,46 +672,10 @@ function explore() {
             `${scenario.message}\n\nA ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
         document.getElementById('game-image').textContent = encounter.image;
         
-        // Enhanced battle system
-        const battleResult = performBattle(state, encounter);
-        
-        if (battleResult.victory) {
-            // Victory rewards
-            state.xp += encounter.xp;
-            state.gold += encounter.gold;
-            
-            let message = `\n\n⚔️ Victory! You defeated the ${encounter.name}!`;
-            message += `\n💔 You took ${battleResult.damageToPlayer} damage`;
-            message += `\n✨ +${encounter.xp} XP, +${encounter.gold} Gold`;
-            
-            // Check for rare loot drops
-            if (Math.random() < 0.3 && encounter.loot.length > 0) {
-                const loot = encounter.loot[Math.floor(Math.random() * encounter.loot.length)];
-                state.inventory = state.inventory || [];
-                state.inventory.push(loot);
-                message += `\n🎁 Found: ${loot}!`;
-            }
-            
-            // Boss victory bonus
-            if (encounter.rarity === 'boss') {
-                state.bossesDefeated = (state.bossesDefeated || 0) + 1;
-                message += `\n👑 EPIC BOSS DEFEATED! Bonus rewards!`;
-                checkAchievements(state);
-            }
-            
-            // Check for level up
-            const leveledUp = checkLevelUp(state);
-            if (leveledUp) {
-                message += `\n\n🎉 LEVEL UP! You are now level ${state.level}!`;
-                message += `\n❤️ HP fully restored! +Attack & Defense!`;
-            }
-            
-            document.getElementById('game-message').textContent += message;
-            
-        } else {
-            document.getElementById('game-message').textContent += 
-                `\n\n💀 You were defeated by the ${encounter.name}! Game Over.\nClick 'New Game' to try again.`;
-        }
+        // Start turn-based battle
+        startBattle(state, encounter);
+        dataManager.saveGameState(state);
+        return; // Exit explore function, battle will handle the rest
     } else {
         // Enhanced treasure system
         const treasureType = Math.random();
@@ -546,40 +734,294 @@ function selectRandomEncounter() {
     }
 }
 
-function performBattle(state, enemy) {
-    // Player stats with equipment bonuses
-    const playerAttack = (state.attack || 15) + (state.equipment?.weapon?.attack || 0);
-    const playerDefense = (state.defense || 5) + (state.equipment?.armor?.defense || 0);
-    const playerCrit = state.critChance || 10;
-    const playerDodge = state.dodgeChance || 5;
+function startBattle(state, enemy) {
+    // Initialize battle state
+    enemy.currentHp = enemy.hp;
+    enemy.maxHp = enemy.hp;
+    enemy.statusEffects = {};
     
-    // Calculate damage dealt to enemy
-    let playerDamage = Math.floor(Math.random() * playerAttack) + Math.floor(playerAttack * 0.5);
+    state.inBattle = true;
+    state.currentEnemy = enemy;
+    state.battleTurn = 'player';
+    state.statusEffects = state.statusEffects || {};
     
-    // Critical hit chance
-    if (Math.random() * 100 < playerCrit) {
-        playerDamage *= 2;
+    // Reduce skill cooldowns at battle start
+    if (state.skills && state.skills.cooldowns) {
+        Object.keys(state.skills.cooldowns).forEach(skillKey => {
+            if (state.skills.cooldowns[skillKey] > 0) {
+                state.skills.cooldowns[skillKey]--;
+            }
+        });
     }
     
-    // Calculate damage taken from enemy
-    let enemyDamage = Math.floor(Math.random() * enemy.attack) + Math.floor(enemy.attack * 0.3);
+    document.getElementById('game-message').textContent = 
+        `⚔️ BATTLE STARTED! ⚔️\n\nA ${enemy.rarity} ${enemy.name} ${enemy.image} challenges you!\n\nChoose your action wisely...`;
     
-    // Dodge chance
-    if (Math.random() * 100 < playerDodge) {
-        enemyDamage = 0;
+    updateGameDisplay();
+    return true;
+}
+
+function performPlayerAction(actionType, skillKey = null) {
+    const state = dataManager.getGameState();
+    const enemy = state.currentEnemy;
+    
+    if (!state.inBattle || !enemy || state.battleTurn !== 'player') return;
+    
+    let battleLog = "";
+    let playerDamage = 0;
+    let manaCost = 0;
+    
+    switch (actionType) {
+        case 'attack':
+            playerDamage = calculatePlayerDamage(state, enemy, 1.0);
+            battleLog = `⚔️ You attack for ${playerDamage} damage!`;
+            break;
+            
+        case 'heavy_attack':
+            playerDamage = calculatePlayerDamage(state, enemy, 2.0);
+            battleLog = `💥 Heavy Attack! ${playerDamage} damage but you're vulnerable!`;
+            enemy.heavyAttackVulnerability = true;
+            break;
+            
+        case 'defend':
+            const healAmount = Math.floor(state.maxHp * 0.1);
+            state.hp = Math.min(state.maxHp, state.hp + healAmount);
+            state.defendingThisTurn = true;
+            battleLog = `🛡️ You defend and recover ${healAmount} HP!`;
+            break;
+            
+        case 'skill':
+            const result = useSkill(state, enemy, skillKey);
+            if (!result.success) {
+                document.getElementById('game-message').textContent = result.message;
+                return;
+            }
+            playerDamage = result.damage || 0;
+            manaCost = result.manaCost || 0;
+            battleLog = result.message;
+            break;
+    }
+    
+    // Apply damage to enemy
+    if (playerDamage > 0) {
+        enemy.currentHp = Math.max(0, enemy.currentHp - playerDamage);
+    }
+    
+    // Deduct mana
+    if (manaCost > 0) {
+        state.mana = Math.max(0, state.mana - manaCost);
+    }
+    
+    // Check if enemy is defeated
+    if (enemy.currentHp <= 0) {
+        endBattle(state, true, battleLog);
+        return;
+    }
+    
+    // Enemy turn
+    state.battleTurn = 'enemy';
+    setTimeout(() => performEnemyAction(state, enemy, battleLog), 1500);
+}
+
+function performEnemyAction(state, enemy, previousLog) {
+    if (!state.inBattle || state.battleTurn !== 'enemy') return;
+    
+    let enemyDamage = calculateEnemyDamage(state, enemy);
+    let battleLog = previousLog + "\n\n";
+    
+    // Check if player is defending
+    if (state.defendingThisTurn) {
+        enemyDamage = Math.floor(enemyDamage * 0.25);
+        battleLog += `🛡️ Your defense reduces damage to ${enemyDamage}!`;
+        state.defendingThisTurn = false;
+    } else if (enemy.heavyAttackVulnerability) {
+        enemyDamage = Math.floor(enemyDamage * 1.5);
+        battleLog += `💥 ${enemy.name} exploits your vulnerability! ${enemyDamage} damage!`;
+        enemy.heavyAttackVulnerability = false;
     } else {
-        // Apply defense
-        enemyDamage = Math.max(1, enemyDamage - playerDefense);
+        battleLog += `${enemy.image} ${enemy.name} attacks for ${enemyDamage} damage!`;
     }
     
     // Apply damage to player
     state.hp = Math.max(0, state.hp - enemyDamage);
     
+    // Check if player is defeated
+    if (state.hp <= 0) {
+        endBattle(state, false, battleLog);
+        return;
+    }
+    
+    // Apply status effects and regeneration
+    processStatusEffects(state, enemy);
+    
+    // Regenerate some mana
+    state.mana = Math.min(state.maxMana, state.mana + 5);
+    
+    // Back to player turn
+    state.battleTurn = 'player';
+    
+    document.getElementById('game-message').textContent = battleLog + "\n\n🎯 Your turn! Choose your action:";
+    updateGameDisplay();
+}
+
+function calculatePlayerDamage(state, enemy, multiplier = 1.0) {
+    const baseAttack = (state.attack || 15) + (state.equipment?.weapon?.attack || 0);
+    let damage = Math.floor(Math.random() * baseAttack) + Math.floor(baseAttack * 0.5);
+    
+    // Apply multiplier
+    damage = Math.floor(damage * multiplier);
+    
+    // Critical hit check
+    const critChance = state.critChance || 10;
+    if (Math.random() * 100 < critChance) {
+        damage *= 2;
+        // Add crit indicator to last message
+    }
+    
+    return Math.max(1, damage);
+}
+
+function calculateEnemyDamage(state, enemy) {
+    let damage = Math.floor(Math.random() * enemy.attack) + Math.floor(enemy.attack * 0.3);
+    
+    // Player dodge check
+    const dodgeChance = state.dodgeChance || 5;
+    if (Math.random() * 100 < dodgeChance) {
+        return 0; // Complete dodge
+    }
+    
+    // Apply player defense
+    const playerDefense = (state.defense || 5) + (state.equipment?.armor?.defense || 0);
+    damage = Math.max(1, damage - playerDefense);
+    
+    return damage;
+}
+
+function useSkill(state, enemy, skillKey) {
+    const skill = skills[skillKey];
+    const cooldown = state.skills?.cooldowns?.[skillKey] || 0;
+    
+    if (!skill) {
+        return { success: false, message: "❌ Skill not found!" };
+    }
+    
+    if (cooldown > 0) {
+        return { success: false, message: `⏳ Skill on cooldown for ${cooldown} more turns!` };
+    }
+    
+    if (state.mana < skill.manaCost) {
+        return { success: false, message: `🔮 Not enough mana! Need ${skill.manaCost}, have ${state.mana}.` };
+    }
+    
+    // Set cooldown
+    state.skills.cooldowns = state.skills.cooldowns || {};
+    state.skills.cooldowns[skillKey] = skill.cooldown;
+    
+    // Apply skill effect
+    return applySkillEffect(state, enemy, skill);
+}
+
+function applySkillEffect(state, enemy, skill) {
+    let damage = 0;
+    let message = `✨ ${skill.name}! `;
+    
+    switch (skill.effect) {
+        case 'magic_damage':
+            damage = Math.floor((state.attack || 15) * 1.5);
+            message += `${damage} magic damage (ignores armor)!`;
+            break;
+            
+        case 'heal_self':
+            const healAmount = Math.floor(state.maxHp * 0.4);
+            state.hp = Math.min(state.maxHp, state.hp + healAmount);
+            message += `Restored ${healAmount} HP!`;
+            break;
+            
+        case 'guaranteed_crit':
+            damage = calculatePlayerDamage(state, enemy, 1.0) * 2;
+            message += `Critical hit for ${damage} damage!`;
+            break;
+            
+        case 'backstab_attack':
+            damage = calculatePlayerDamage(state, enemy, 1.8) * 2;
+            message += `Backstab critical for ${damage} damage!`;
+            break;
+            
+        case 'ultimate_attack':
+            damage = calculatePlayerDamage(state, enemy, 3.0);
+            message += `ULTIMATE ATTACK! ${damage} devastating damage!`;
+            break;
+            
+        default:
+            damage = calculatePlayerDamage(state, enemy, 1.2);
+            message += `${damage} enhanced damage!`;
+    }
+    
     return {
-        victory: state.hp > 0,
-        damageToPlayer: enemyDamage,
-        damageToEnemy: playerDamage
+        success: true,
+        damage: damage,
+        manaCost: skill.manaCost,
+        message: message
     };
+}
+
+function processStatusEffects(state, enemy) {
+    // Process any status effects here (poison, buffs, etc.)
+}
+
+function endBattle(state, victory, battleLog) {
+    const enemy = state.currentEnemy;
+    let finalMessage = battleLog + "\n\n";
+    
+    if (victory) {
+        // Victory rewards
+        state.xp += enemy.xp;
+        state.gold += enemy.gold;
+        
+        finalMessage += `🎉 VICTORY! 🎉\n`;
+        finalMessage += `💀 Defeated ${enemy.name}!\n`;
+        finalMessage += `✨ +${enemy.xp} XP\n`;
+        finalMessage += `💰 +${enemy.gold} Gold\n`;
+        
+        // Check for loot drops
+        if (Math.random() < 0.3 && enemy.loot && enemy.loot.length > 0) {
+            const loot = enemy.loot[Math.floor(Math.random() * enemy.loot.length)];
+            state.inventory = state.inventory || [];
+            state.inventory.push(loot);
+            finalMessage += `🎁 Found: ${loot}!\n`;
+        }
+        
+        // Boss victory bonus
+        if (enemy.rarity === 'boss') {
+            state.bossesDefeated = (state.bossesDefeated || 0) + 1;
+            finalMessage += `\n👑 EPIC BOSS DEFEATED!\n`;
+        }
+        
+        // Level up check
+        const leveledUp = checkLevelUp(state);
+        if (leveledUp) {
+            finalMessage += `\n🎉 LEVEL UP! Now level ${state.level}!\n`;
+            finalMessage += `❤️ HP restored! Stats increased!\n`;
+        }
+        
+    } else {
+        finalMessage += `💀 DEFEAT! 💀\n`;
+        finalMessage += `You were defeated by ${enemy.name}!\n`;
+        finalMessage += `Click 'New Game' to try again.\n`;
+    }
+    
+    // Clean up battle state
+    state.inBattle = false;
+    state.currentEnemy = null;
+    state.battleTurn = 'player';
+    state.statusEffects = {};
+    
+    document.getElementById('game-message').textContent = finalMessage;
+    document.getElementById('game-image').textContent = victory ? "🎉" : "💀";
+    
+    checkAchievements(state);
+    dataManager.saveGameState(state);
+    updateGameDisplay();
 }
 
 function checkLevelUp(state) {
@@ -783,15 +1225,67 @@ function showInventory(state) {
     document.getElementById('game-image').textContent = "🎒";
 }
 
+function chooseClass() {
+    let classMessage = "🎭 === CHOOSE YOUR CLASS === 🎭\n\n";
+    
+    Object.keys(characterClasses).forEach((classKey, index) => {
+        const classData = characterClasses[classKey];
+        classMessage += `${index + 1}. ${classData.name}\n`;
+        classMessage += `   ${classData.description}\n\n`;
+    });
+    
+    classMessage += "Enter 1-4 to choose your class:";
+    
+    const choice = prompt(classMessage);
+    const classKeys = Object.keys(characterClasses);
+    const selectedIndex = parseInt(choice) - 1;
+    
+    if (selectedIndex >= 0 && selectedIndex < classKeys.length) {
+        const selectedClass = classKeys[selectedIndex];
+        const state = dataManager.getGameState();
+        
+        // Apply class bonuses
+        const classData = characterClasses[selectedClass];
+        state.class = selectedClass;
+        state.maxHp += classData.bonuses.hp || 0;
+        state.hp = state.maxHp;
+        state.attack += classData.bonuses.attack || 0;
+        state.defense += classData.bonuses.defense || 0;
+        state.critChance += classData.bonuses.critChance || 0;
+        state.dodgeChance += classData.bonuses.dodgeChance || 0;
+        state.maxMana += classData.bonuses.mana || 0;
+        state.mana = state.maxMana;
+        
+        // Unlock starting skills
+        state.skills.available = [...classData.skills];
+        
+        dataManager.saveGameState(state);
+        updateGameDisplay();
+        
+        document.getElementById('game-message').textContent = 
+            `Class selected: ${classData.name}!\n\nYou've unlocked your class skills and gained stat bonuses. Your adventure begins now!`;
+        document.getElementById('game-image').textContent = classData.name.split(' ')[0];
+        
+        return true;
+    } else {
+        document.getElementById('game-message').textContent = 
+            "Invalid choice! Please restart and choose a valid class (1-4).";
+        return false;
+    }
+}
+
 function showStats() {
     const state = dataManager.getGameState();
+    const classData = characterClasses[state.class] || characterClasses.warrior;
     
     let statsMessage = "📊 === CHARACTER STATS === 📊\n\n";
     statsMessage += `🦸 Name: ${state.name}\n`;
+    statsMessage += `🎭 Class: ${classData.name}\n`;
     statsMessage += `⭐ Level: ${state.level}\n`;
     statsMessage += `✨ XP: ${state.xp}/${state.xpNeeded}\n`;
     statsMessage += `❤️ HP: ${state.hp}/${state.maxHp}\n`;
-    statsMessage += `💰 Gold: ${state.gold}\n\n`;
+    statsMessage += `� Mana: ${state.mana || 50}/${state.maxMana || 50}\n`;
+    statsMessage += `�💰 Gold: ${state.gold}\n\n`;
     
     statsMessage += "=== COMBAT STATS ===\n";
     statsMessage += `⚔️ Attack: ${state.attack || 15}\n`;
@@ -803,7 +1297,22 @@ function showStats() {
     statsMessage += `⚔️ Weapon: ${state.equipment?.weapon?.name || 'Iron Sword'}\n`;
     statsMessage += `🛡️ Armor: ${state.equipment?.armor?.name || 'Leather Armor'}\n\n`;
     
-    statsMessage += "=== ACHIEVEMENTS ===\n";
+    statsMessage += "=== SKILLS ===\n";
+    const availableSkills = state.skills?.available || [];
+    if (availableSkills.length > 0) {
+        availableSkills.forEach(skillKey => {
+            const skill = skills[skillKey];
+            if (skill) {
+                const cooldown = state.skills?.cooldowns?.[skillKey] || 0;
+                const status = cooldown > 0 ? `(${cooldown} turns)` : '✅';
+                statsMessage += `${skill.name} ${status}\n`;
+            }
+        });
+    } else {
+        statsMessage += "No skills unlocked yet.\n";
+    }
+    
+    statsMessage += "\n=== ACHIEVEMENTS ===\n";
     const unlockedCount = (state.achievements || []).length;
     statsMessage += `🏆 Unlocked: ${unlockedCount}/${achievements.length}\n`;
     statsMessage += `🗺️ Explorations: ${state.explorationCount || 0}\n`;
@@ -960,7 +1469,56 @@ document.getElementById('inventory-btn').addEventListener('click', () => {
     showInventory(state);
 });
 document.getElementById('stats-btn').addEventListener('click', showStats);
+document.getElementById('choose-class-btn').addEventListener('click', chooseClass);
 document.getElementById('reset-game-btn').addEventListener('click', resetGame);
+
+// Battle action event listeners
+document.getElementById('attack-btn').addEventListener('click', () => {
+    performPlayerAction('attack');
+});
+document.getElementById('heavy-attack-btn').addEventListener('click', () => {
+    performPlayerAction('heavy_attack');
+});
+document.getElementById('defend-btn').addEventListener('click', () => {
+    performPlayerAction('defend');
+});
+document.getElementById('skills-btn').addEventListener('click', () => {
+    showSkillMenu();
+});
+
+function showSkillMenu() {
+    const state = dataManager.getGameState();
+    const availableSkills = state.skills?.available || [];
+    
+    if (availableSkills.length === 0) {
+        document.getElementById('game-message').textContent += '\n\n❌ No skills available!';
+        return;
+    }
+    
+    let skillMessage = "✨ === CHOOSE SKILL === ✨\n\n";
+    
+    availableSkills.forEach((skillKey, index) => {
+        const skill = skills[skillKey];
+        const cooldown = state.skills?.cooldowns?.[skillKey] || 0;
+        const canUse = cooldown === 0 && state.mana >= skill.manaCost;
+        const status = cooldown > 0 ? `(${cooldown} turns)` : 
+                      state.mana < skill.manaCost ? `(${skill.manaCost} mana)` : '✅';
+        
+        skillMessage += `${index + 1}. ${skill.name} ${status}\n`;
+        skillMessage += `   ${skill.description}\n`;
+        skillMessage += `   Mana: ${skill.manaCost} | Cooldown: ${skill.cooldown}\n\n`;
+    });
+    
+    skillMessage += "Enter 1-" + availableSkills.length + " to use skill, or any other key to cancel:";
+    
+    const choice = prompt(skillMessage);
+    const skillIndex = parseInt(choice) - 1;
+    
+    if (skillIndex >= 0 && skillIndex < availableSkills.length) {
+        const skillKey = availableSkills[skillIndex];
+        performPlayerAction('skill', skillKey);
+    }
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
