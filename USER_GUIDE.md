@@ -96,9 +96,39 @@ This is your mini RPG adventure game!
 - The higher your level, the more XP you need to level up
 - Each level increases your max HP by 20
 
+## 🔐 Authentication & Security
+
+The Edit section is protected by a password to make sure only YOU can add or change content on your website.
+
+### How to Login:
+1. Click on the "Edit" link in the navigation (if you see it)
+2. If you're not logged in, you'll see a login page
+3. Enter your password (default is "silas123")
+4. Click "Login"
+5. Once logged in, the Edit link will appear in your navigation
+
+### How to Logout:
+1. Go to the Edit section
+2. Click the "🚪 Logout" button in the top-right corner
+3. Confirm that you want to logout
+
+### Changing Your Password:
+1. Login to the Edit section
+2. Scroll down to the "Change Password" panel
+3. Enter your current password
+4. Enter your new password (must be at least 6 characters)
+5. Confirm your new password
+6. Click "Change Password"
+
+**Important Security Notes:**
+- Your password is stored in your browser (not on a server)
+- Make sure to change the default password to something secure!
+- Don't share your password with anyone
+- Your login session ends when you close the browser
+
 ## ✏️ Edit Section
 
-This is your control panel for managing all content!
+This is your control panel for managing all content! You must be logged in to access this section.
 
 ### Edit Bio
 1. Type your bio in the text box

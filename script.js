@@ -25,6 +25,10 @@ class DataManager {
         if (!localStorage.getItem('silas-game-state')) {
             this.resetGame();
         }
+        if (!localStorage.getItem('silas-password')) {
+            // Default password: silas123
+            localStorage.setItem('silas-password', 'silas123');
+        }
     }
 
     getBio() {
@@ -96,10 +100,115 @@ class DataManager {
         };
         this.saveGameState(initialState);
     }
+
+    getPassword() {
+        return localStorage.getItem('silas-password');
+    }
+
+    setPassword(password) {
+        localStorage.setItem('silas-password', password);
+    }
+
+    isAuthenticated() {
+        return sessionStorage.getItem('silas-authenticated') === 'true';
+    }
+
+    setAuthenticated(value) {
+        sessionStorage.setItem('silas-authenticated', value ? 'true' : 'false');
+    }
 }
 
 // Initialize Data Manager
 const dataManager = new DataManager();
+
+// Authentication
+function checkAuth() {
+    const adminNavLink = document.getElementById('admin-nav-link');
+    if (dataManager.isAuthenticated()) {
+        adminNavLink.style.display = 'block';
+    } else {
+        adminNavLink.style.display = 'none';
+    }
+}
+
+function login() {
+    const password = document.getElementById('login-password').value;
+    const errorElement = document.getElementById('login-error');
+    
+    if (password === dataManager.getPassword()) {
+        dataManager.setAuthenticated(true);
+        errorElement.textContent = '';
+        document.getElementById('login-password').value = '';
+        checkAuth();
+        
+        // Navigate to admin section
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.section');
+        
+        navLinks.forEach(l => l.classList.remove('active'));
+        document.querySelector('[data-section="admin"]').classList.add('active');
+        
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById('admin').classList.add('active');
+        
+        loadAdmin();
+        showMessage('Successfully logged in!', 'success');
+    } else {
+        errorElement.textContent = 'Incorrect password. Please try again.';
+        document.getElementById('login-password').value = '';
+    }
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        dataManager.setAuthenticated(false);
+        checkAuth();
+        
+        // Navigate to home section
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.section');
+        
+        navLinks.forEach(l => l.classList.remove('active'));
+        document.querySelector('[data-section="home"]').classList.add('active');
+        
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById('home').classList.add('active');
+        
+        showMessage('Successfully logged out!', 'success');
+    }
+}
+
+function changePassword() {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showMessage('Please fill in all password fields!', 'error');
+        return;
+    }
+    
+    if (currentPassword !== dataManager.getPassword()) {
+        showMessage('Current password is incorrect!', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showMessage('New password must be at least 6 characters!', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showMessage('New passwords do not match!', 'error');
+        return;
+    }
+    
+    dataManager.setPassword(newPassword);
+    document.getElementById('current-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    showMessage('Password changed successfully!', 'success');
+}
 
 // Navigation
 function setupNavigation() {
@@ -110,6 +219,15 @@ function setupNavigation() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const sectionId = link.dataset.section;
+
+            // Check if trying to access admin without authentication
+            if (sectionId === 'admin' && !dataManager.isAuthenticated()) {
+                // Show login section instead
+                navLinks.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                document.getElementById('login').classList.add('active');
+                return;
+            }
 
             // Update active nav link
             navLinks.forEach(l => l.classList.remove('active'));
@@ -478,6 +596,14 @@ function showMessage(text, type) {
 }
 
 // Event Listeners
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('login-password').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        login();
+    }
+});
+document.getElementById('logout-btn').addEventListener('click', logout);
+document.getElementById('change-password-btn').addEventListener('click', changePassword);
 document.getElementById('save-bio-btn').addEventListener('click', saveBio);
 document.getElementById('add-interest-btn').addEventListener('click', addInterest);
 document.getElementById('add-picture-btn').addEventListener('click', addPicture);
@@ -490,9 +616,12 @@ document.getElementById('reset-game-btn').addEventListener('click', resetGame);
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
+    checkAuth();
     loadHome();
     loadGallery();
     loadStories();
     loadGame();
-    loadAdmin();
+    if (dataManager.isAuthenticated()) {
+        loadAdmin();
+    }
 });

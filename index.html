@@ -16,7 +16,7 @@
                 <li><a href="#gallery" class="nav-link" data-section="gallery">Gallery</a></li>
                 <li><a href="#stories" class="nav-link" data-section="stories">Stories</a></li>
                 <li><a href="#game" class="nav-link" data-section="game">Adventure Game</a></li>
-                <li><a href="#admin" class="nav-link" data-section="admin">✏️ Edit</a></li>
+                <li><a href="#admin" class="nav-link" data-section="admin" id="admin-nav-link">✏️ Edit</a></li>
             </ul>
         </nav>
 
@@ -103,9 +103,28 @@
             </div>
         </section>
 
+        <!-- Login Section -->
+        <section id="login" class="section">
+            <h2>🔐 Login</h2>
+            <div class="login-container">
+                <p>This area is for Silas only. Please enter your password to continue.</p>
+                <div class="login-form">
+                    <input type="password" id="login-password" class="input" placeholder="Enter password" />
+                    <button class="btn" id="login-btn">Login</button>
+                    <p id="login-error" class="login-error"></p>
+                </div>
+                <div class="password-hint">
+                    <p><small>Hint: Your password is set to "silas123" by default. You can change it in the Edit section after logging in.</small></p>
+                </div>
+            </div>
+        </section>
+
         <!-- Admin/Edit Section -->
         <section id="admin" class="section">
             <h2>✏️ Edit Your Content</h2>
+            <div class="admin-header">
+                <button class="btn logout-btn" id="logout-btn">🚪 Logout</button>
+            </div>
             
             <!-- Edit Bio -->
             <div class="admin-panel">
@@ -140,6 +159,15 @@
                 <input type="text" id="story-title" class="input" placeholder="Story Title" />
                 <textarea id="story-content" class="editor" rows="8" placeholder="Write your story..."></textarea>
                 <button class="btn" id="add-story-btn">Add Story</button>
+            </div>
+
+            <!-- Change Password -->
+            <div class="admin-panel">
+                <h3>Change Password</h3>
+                <input type="password" id="current-password" class="input" placeholder="Current Password" />
+                <input type="password" id="new-password" class="input" placeholder="New Password" />
+                <input type="password" id="confirm-password" class="input" placeholder="Confirm New Password" />
+                <button class="btn" id="change-password-btn">Change Password</button>
             </div>
         </section>
     </div>
