@@ -255,18 +255,19 @@ body {
 
 .game-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
     margin-bottom: 25px;
 }
 
 .stat-item {
     background: #ecf0f1;
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     text-align: center;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     border: 2px solid #ff6b35;
+    font-size: 0.9em;
 }
 
 .stat-label {

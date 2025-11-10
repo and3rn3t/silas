@@ -96,7 +96,20 @@ class DataManager {
             hp: 100,
             maxHp: 100,
             gold: 0,
-            currentLocation: 'castle'
+            currentLocation: 'castle',
+            class: 'warrior',
+            attack: 15,
+            defense: 5,
+            critChance: 10,
+            dodgeChance: 5,
+            equipment: {
+                weapon: { name: 'Iron Sword', attack: 10, rarity: 'common' },
+                armor: { name: 'Leather Armor', defense: 5, rarity: 'common' }
+            },
+            inventory: [],
+            achievements: [],
+            bossesDefeated: 0,
+            explorationCount: 0
         };
         this.saveGameState(initialState);
     }
@@ -345,11 +358,49 @@ const gameScenarios = {
 };
 
 const encounters = [
-    { name: "Slime", image: "🟢", xp: 20, gold: 10, damage: 5 },
-    { name: "Goblin", image: "👺", xp: 35, gold: 25, damage: 10 },
-    { name: "Wolf", image: "🐺", xp: 40, gold: 20, damage: 12 },
-    { name: "Skeleton", image: "💀", xp: 50, gold: 30, damage: 15 },
-    { name: "Dragon", image: "🐉", xp: 100, gold: 100, damage: 25 }
+    // Common enemies (60% spawn rate)
+    { name: "Slime", image: "🟢", xp: 20, gold: 10, attack: 8, hp: 25, rarity: "common", loot: ["Health Potion"] },
+    { name: "Goblin", image: "👺", xp: 35, gold: 25, attack: 12, hp: 40, rarity: "common", loot: ["Bronze Dagger", "Gold Coins"] },
+    { name: "Wolf", image: "🐺", xp: 40, gold: 20, attack: 15, hp: 35, rarity: "common", loot: ["Wolf Pelt", "Health Potion"] },
+    
+    // Uncommon enemies (30% spawn rate)
+    { name: "Orc Warrior", image: "👹", xp: 60, gold: 40, attack: 20, hp: 60, rarity: "uncommon", loot: ["Iron Axe", "Shield"] },
+    { name: "Dark Mage", image: "🧙‍♂️", xp: 70, gold: 50, attack: 25, hp: 45, rarity: "uncommon", loot: ["Magic Staff", "Mana Potion"] },
+    { name: "Skeleton Knight", image: "💀", xp: 65, gold: 45, attack: 22, hp: 55, rarity: "uncommon", loot: ["Bone Sword", "Ancient Coin"] },
+    
+    // Rare enemies (8% spawn rate)
+    { name: "Troll Champion", image: "👹", xp: 120, gold: 80, attack: 35, hp: 100, rarity: "rare", loot: ["Troll Club", "Rare Gem"] },
+    { name: "Fire Elemental", image: "🔥", xp: 110, gold: 75, attack: 30, hp: 80, rarity: "rare", loot: ["Flame Sword", "Fire Crystal"] },
+    
+    // Epic boss (2% spawn rate)
+    { name: "Ancient Dragon", image: "🐉", xp: 300, gold: 200, attack: 50, hp: 200, rarity: "boss", loot: ["Dragon Blade", "Dragon Scale Armor", "Legendary Gem"] }
+];
+
+const equipment = {
+    weapons: [
+        { name: "Iron Sword", attack: 10, cost: 100, rarity: "common" },
+        { name: "Bronze Dagger", attack: 8, cost: 75, rarity: "common" },
+        { name: "Steel Sword", attack: 18, cost: 250, rarity: "uncommon" },
+        { name: "Iron Axe", attack: 22, cost: 300, rarity: "uncommon" },
+        { name: "Magic Staff", attack: 25, cost: 400, rarity: "rare" },
+        { name: "Flame Sword", attack: 30, cost: 600, rarity: "rare" },
+        { name: "Dragon Blade", attack: 45, cost: 1500, rarity: "legendary" }
+    ],
+    armor: [
+        { name: "Leather Armor", defense: 5, cost: 80, rarity: "common" },
+        { name: "Chain Mail", defense: 12, cost: 200, rarity: "uncommon" },
+        { name: "Steel Plate", defense: 20, cost: 500, rarity: "rare" },
+        { name: "Dragon Scale Armor", defense: 35, cost: 2000, rarity: "legendary" }
+    ]
+};
+
+const achievements = [
+    { id: "first_kill", name: "First Blood", description: "Defeat your first enemy", reward: 50 },
+    { id: "explorer", name: "Explorer", description: "Explore 10 locations", reward: 100 },
+    { id: "treasure_hunter", name: "Treasure Hunter", description: "Find 500 gold", reward: 200 },
+    { id: "level_master", name: "Level Master", description: "Reach level 10", reward: 500 },
+    { id: "dragon_slayer", name: "Dragon Slayer", description: "Defeat the Ancient Dragon", reward: 1000 },
+    { id: "boss_hunter", name: "Boss Hunter", description: "Defeat 5 boss enemies", reward: 750 }
 ];
 
 function loadGame() {
@@ -366,63 +417,232 @@ function updateGameDisplay() {
     document.getElementById('hero-hp').textContent = state.hp;
     document.getElementById('hero-max-hp').textContent = state.maxHp;
     document.getElementById('hero-gold').textContent = state.gold;
+    
+    // Update new stats if elements exist  
+    const attackEl = document.getElementById('hero-attack');
+    const defenseEl = document.getElementById('hero-defense');
+    const weaponEl = document.getElementById('hero-weapon');
+    const armorEl = document.getElementById('hero-armor');
+    
+    if (attackEl) attackEl.textContent = state.attack || 15;
+    if (defenseEl) defenseEl.textContent = state.defense || 5;
+    if (weaponEl) weaponEl.textContent = state.equipment?.weapon?.name || 'Iron Sword';
+    if (armorEl) armorEl.textContent = state.equipment?.armor?.name || 'Leather Armor';
 }
 
 function explore() {
     const state = dataManager.getGameState();
+    state.explorationCount = (state.explorationCount || 0) + 1;
+    
     const locations = Object.keys(gameScenarios);
     const randomLocation = locations[Math.floor(Math.random() * locations.length)];
     const scenario = gameScenarios[randomLocation];
     
     state.currentLocation = randomLocation;
     
-    // Random encounter (50% chance)
-    if (Math.random() < 0.5) {
-        const encounter = encounters[Math.floor(Math.random() * encounters.length)];
+    // Enhanced encounter system (60% chance)
+    if (Math.random() < 0.6) {
+        const encounter = selectRandomEncounter();
         
         document.getElementById('game-message').textContent = 
-            `${scenario.message}\n\nA wild ${encounter.name} appears! ${encounter.image}`;
+            `${scenario.message}\n\nA ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
         document.getElementById('game-image').textContent = encounter.image;
         
-        // Battle
-        const damage = Math.floor(Math.random() * encounter.damage);
-        state.hp = Math.max(0, state.hp - damage);
+        // Enhanced battle system
+        const battleResult = performBattle(state, encounter);
         
-        if (state.hp > 0) {
+        if (battleResult.victory) {
+            // Victory rewards
             state.xp += encounter.xp;
             state.gold += encounter.gold;
             
-            // Check for level up
-            while (state.xp >= state.xpNeeded) {
-                state.level++;
-                state.xp -= state.xpNeeded;
-                state.xpNeeded = Math.floor(state.xpNeeded * 1.5);
-                state.maxHp += 20;
-                state.hp = state.maxHp;
-                
-                setTimeout(() => {
-                    alert(`🎉 Level Up! You are now level ${state.level}! HP fully restored!`);
-                }, 100);
+            let message = `\n\n⚔️ Victory! You defeated the ${encounter.name}!`;
+            message += `\n💔 You took ${battleResult.damageToPlayer} damage`;
+            message += `\n✨ +${encounter.xp} XP, +${encounter.gold} Gold`;
+            
+            // Check for rare loot drops
+            if (Math.random() < 0.3 && encounter.loot.length > 0) {
+                const loot = encounter.loot[Math.floor(Math.random() * encounter.loot.length)];
+                state.inventory = state.inventory || [];
+                state.inventory.push(loot);
+                message += `\n🎁 Found: ${loot}!`;
             }
             
-            document.getElementById('game-message').textContent += 
-                `\n\nYou defeated the ${encounter.name}! You took ${damage} damage.\n+${encounter.xp} XP, +${encounter.gold} Gold`;
+            // Boss victory bonus
+            if (encounter.rarity === 'boss') {
+                state.bossesDefeated = (state.bossesDefeated || 0) + 1;
+                message += `\n👑 EPIC BOSS DEFEATED! Bonus rewards!`;
+                checkAchievements(state);
+            }
+            
+            // Check for level up
+            const leveledUp = checkLevelUp(state);
+            if (leveledUp) {
+                message += `\n\n🎉 LEVEL UP! You are now level ${state.level}!`;
+                message += `\n❤️ HP fully restored! +Attack & Defense!`;
+            }
+            
+            document.getElementById('game-message').textContent += message;
+            
         } else {
             document.getElementById('game-message').textContent += 
-                `\n\n💀 You were defeated! Game Over. Click 'New Game' to try again.`;
+                `\n\n💀 You were defeated by the ${encounter.name}! Game Over.\nClick 'New Game' to try again.`;
         }
     } else {
-        // Safe exploration
-        const goldFound = Math.floor(Math.random() * 30) + 10;
-        state.gold += goldFound;
+        // Enhanced treasure system
+        const treasureType = Math.random();
+        let message = `${scenario.message}\n\n`;
         
-        document.getElementById('game-message').textContent = 
-            `${scenario.message}\n\nYou found ${goldFound} gold coins! 💰`;
+        if (treasureType < 0.7) {
+            // Gold treasure
+            const goldFound = Math.floor(Math.random() * 50) + 20;
+            state.gold += goldFound;
+            message += `💰 You found ${goldFound} gold coins!`;
+        } else if (treasureType < 0.9) {
+            // Equipment treasure
+            const equipmentType = Math.random() < 0.5 ? 'weapons' : 'armor';
+            const items = equipment[equipmentType].filter(item => item.rarity === 'common' || item.rarity === 'uncommon');
+            const foundEquipment = items[Math.floor(Math.random() * items.length)];
+            
+            state.inventory = state.inventory || [];
+            state.inventory.push(foundEquipment);
+            message += `⚔️ You found ${foundEquipment.name}! Added to inventory.`;
+        } else {
+            // Rare gem
+            const gemValue = Math.floor(Math.random() * 100) + 50;
+            state.gold += gemValue;
+            message += `💎 You found a rare gem worth ${gemValue} gold!`;
+        }
+        
+        document.getElementById('game-message').textContent = message;
         document.getElementById('game-image').textContent = scenario.image;
     }
     
+    // Check achievements
+    checkAchievements(state);
+    
     dataManager.saveGameState(state);
     updateGameDisplay();
+}
+
+function selectRandomEncounter() {
+    const rand = Math.random();
+    
+    if (rand < 0.02) {
+        // 2% chance for boss
+        return encounters.find(e => e.rarity === 'boss');
+    } else if (rand < 0.10) {
+        // 8% chance for rare
+        const rareEnemies = encounters.filter(e => e.rarity === 'rare');
+        return rareEnemies[Math.floor(Math.random() * rareEnemies.length)];
+    } else if (rand < 0.40) {
+        // 30% chance for uncommon
+        const uncommonEnemies = encounters.filter(e => e.rarity === 'uncommon');
+        return uncommonEnemies[Math.floor(Math.random() * uncommonEnemies.length)];
+    } else {
+        // 60% chance for common
+        const commonEnemies = encounters.filter(e => e.rarity === 'common');
+        return commonEnemies[Math.floor(Math.random() * commonEnemies.length)];
+    }
+}
+
+function performBattle(state, enemy) {
+    // Player stats with equipment bonuses
+    const playerAttack = (state.attack || 15) + (state.equipment?.weapon?.attack || 0);
+    const playerDefense = (state.defense || 5) + (state.equipment?.armor?.defense || 0);
+    const playerCrit = state.critChance || 10;
+    const playerDodge = state.dodgeChance || 5;
+    
+    // Calculate damage dealt to enemy
+    let playerDamage = Math.floor(Math.random() * playerAttack) + Math.floor(playerAttack * 0.5);
+    
+    // Critical hit chance
+    if (Math.random() * 100 < playerCrit) {
+        playerDamage *= 2;
+    }
+    
+    // Calculate damage taken from enemy
+    let enemyDamage = Math.floor(Math.random() * enemy.attack) + Math.floor(enemy.attack * 0.3);
+    
+    // Dodge chance
+    if (Math.random() * 100 < playerDodge) {
+        enemyDamage = 0;
+    } else {
+        // Apply defense
+        enemyDamage = Math.max(1, enemyDamage - playerDefense);
+    }
+    
+    // Apply damage to player
+    state.hp = Math.max(0, state.hp - enemyDamage);
+    
+    return {
+        victory: state.hp > 0,
+        damageToPlayer: enemyDamage,
+        damageToEnemy: playerDamage
+    };
+}
+
+function checkLevelUp(state) {
+    let leveledUp = false;
+    
+    while (state.xp >= state.xpNeeded) {
+        state.level++;
+        state.xp -= state.xpNeeded;
+        state.xpNeeded = Math.floor(state.xpNeeded * 1.5);
+        
+        // Level up bonuses
+        state.maxHp += 25;
+        state.hp = state.maxHp;
+        state.attack += 2;
+        state.defense += 1;
+        state.critChance += 1;
+        
+        leveledUp = true;
+    }
+    
+    return leveledUp;
+}
+
+function checkAchievements(state) {
+    const unlockedAchievements = state.achievements || [];
+    
+    achievements.forEach(achievement => {
+        if (unlockedAchievements.includes(achievement.id)) return;
+        
+        let unlocked = false;
+        
+        switch (achievement.id) {
+            case 'first_kill':
+                unlocked = state.explorationCount >= 1;
+                break;
+            case 'explorer':
+                unlocked = state.explorationCount >= 10;
+                break;
+            case 'treasure_hunter':
+                unlocked = state.gold >= 500;
+                break;
+            case 'level_master':
+                unlocked = state.level >= 10;
+                break;
+            case 'dragon_slayer':
+                unlocked = state.bossesDefeated >= 1;
+                break;
+            case 'boss_hunter':
+                unlocked = state.bossesDefeated >= 5;
+                break;
+        }
+        
+        if (unlocked) {
+            unlockedAchievements.push(achievement.id);
+            state.gold += achievement.reward;
+            
+            setTimeout(() => {
+                alert(`🏆 Achievement Unlocked!\n${achievement.name}\n${achievement.description}\n+${achievement.reward} Gold Reward!`);
+            }, 100);
+        }
+    });
+    
+    state.achievements = unlockedAchievements;
 }
 
 function rest() {
@@ -448,16 +668,25 @@ function rest() {
 function shop() {
     const state = dataManager.getGameState();
     
-    const items = [
-        { name: "Health Potion", cost: 50, effect: "Restore 50 HP" },
-        { name: "Max HP Upgrade", cost: 100, effect: "+20 Max HP" }
-    ];
-    
-    let shopMessage = "🏪 Welcome to the Shop!\n\n";
-    shopMessage += "Your Gold: " + state.gold + "\n\n";
+    let shopMessage = "🏪 ⚔️ ADVENTURE SHOP ⚔️ 🏪\n\n";
+    shopMessage += `Your Gold: ${state.gold} 💰\n\n`;
+    shopMessage += "=== CONSUMABLES ===\n";
     shopMessage += "1. Health Potion - 50 Gold (Restore 50 HP)\n";
-    shopMessage += "2. Max HP Upgrade - 100 Gold (+20 Max HP)\n\n";
-    shopMessage += "Enter 1 or 2 to buy, or any other key to leave.";
+    shopMessage += "2. Max HP Upgrade - 200 Gold (+30 Max HP)\n\n";
+    
+    shopMessage += "=== WEAPONS ===\n";
+    const availableWeapons = equipment.weapons.filter(w => w.cost <= state.gold * 2);
+    availableWeapons.slice(0, 3).forEach((weapon, index) => {
+        shopMessage += `${index + 3}. ${weapon.name} - ${weapon.cost} Gold (+${weapon.attack} Attack)\n`;
+    });
+    
+    shopMessage += "\n=== ARMOR ===\n";
+    const availableArmor = equipment.armor.filter(a => a.cost <= state.gold * 2);
+    availableArmor.slice(0, 3).forEach((armor, index) => {
+        shopMessage += `${index + 6}. ${armor.name} - ${armor.cost} Gold (+${armor.defense} Defense)\n`;
+    });
+    
+    shopMessage += "\nEnter number to buy, 'i' for inventory, or any other key to leave.";
     
     const choice = prompt(shopMessage);
     
@@ -465,25 +694,133 @@ function shop() {
         state.gold -= 50;
         state.hp = Math.min(state.maxHp, state.hp + 50);
         document.getElementById('game-message').textContent = 
-            "You bought a Health Potion! +50 HP";
-    } else if (choice === "2" && state.gold >= 100) {
-        state.gold -= 100;
-        state.maxHp += 20;
-        state.hp += 20;
+            "🧪 You bought a Health Potion! +50 HP restored!";
+    } else if (choice === "2" && state.gold >= 200) {
+        state.gold -= 200;
+        state.maxHp += 30;
+        state.hp += 30;
         document.getElementById('game-message').textContent = 
-            "You bought a Max HP Upgrade! +20 Max HP";
-    } else if (choice === "1" || choice === "2") {
+            "💪 You bought a Max HP Upgrade! +30 Max HP permanently!";
+    } else if (choice >= "3" && choice <= "5") {
+        const weaponIndex = parseInt(choice) - 3;
+        if (weaponIndex < availableWeapons.length) {
+            const weapon = availableWeapons[weaponIndex];
+            if (state.gold >= weapon.cost) {
+                state.gold -= weapon.cost;
+                
+                // Replace current weapon
+                const oldWeapon = state.equipment?.weapon?.name || 'None';
+                state.equipment = state.equipment || {};
+                state.equipment.weapon = weapon;
+                state.attack = 15 + weapon.attack; // Base attack + weapon bonus
+                
+                document.getElementById('game-message').textContent = 
+                    `⚔️ You bought ${weapon.name}! Replaced ${oldWeapon}.\n+${weapon.attack} Attack Power!`;
+            } else {
+                document.getElementById('game-message').textContent = 
+                    "💸 Not enough gold for that weapon!";
+            }
+        }
+    } else if (choice >= "6" && choice <= "8") {
+        const armorIndex = parseInt(choice) - 6;
+        if (armorIndex < availableArmor.length) {
+            const armor = availableArmor[armorIndex];
+            if (state.gold >= armor.cost) {
+                state.gold -= armor.cost;
+                
+                // Replace current armor
+                const oldArmor = state.equipment?.armor?.name || 'None';
+                state.equipment = state.equipment || {};
+                state.equipment.armor = armor;
+                state.defense = 5 + armor.defense; // Base defense + armor bonus
+                
+                document.getElementById('game-message').textContent = 
+                    `🛡️ You bought ${armor.name}! Replaced ${oldArmor}.\n+${armor.defense} Defense Power!`;
+            } else {
+                document.getElementById('game-message').textContent = 
+                    "💸 Not enough gold for that armor!";
+            }
+        }
+    } else if (choice.toLowerCase() === "i") {
+        showInventory(state);
+        return; // Don't update display yet
+    } else if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(choice)) {
         document.getElementById('game-message').textContent = 
-            "Not enough gold!";
+            "💸 Not enough gold for that item!";
     } else {
         document.getElementById('game-message').textContent = 
-            "You left the shop.";
+            "👋 Thanks for visiting the shop! Come back anytime!";
     }
     
     document.getElementById('game-image').textContent = "🏪";
     
     dataManager.saveGameState(state);
     updateGameDisplay();
+}
+
+function showInventory(state) {
+    const inventory = state.inventory || [];
+    
+    if (inventory.length === 0) {
+        document.getElementById('game-message').textContent = 
+            "🎒 Your inventory is empty! Find items while exploring or buy them from the shop.";
+        document.getElementById('game-image').textContent = "🎒";
+        return;
+    }
+    
+    let inventoryMessage = "🎒 === YOUR INVENTORY === 🎒\n\n";
+    inventory.forEach((item, index) => {
+        if (typeof item === 'string') {
+            inventoryMessage += `${index + 1}. ${item}\n`;
+        } else {
+            inventoryMessage += `${index + 1}. ${item.name} (${item.rarity})\n`;
+        }
+    });
+    
+    inventoryMessage += "\nYour inventory contains items you've found during your adventures!";
+    
+    document.getElementById('game-message').textContent = inventoryMessage;
+    document.getElementById('game-image').textContent = "🎒";
+}
+
+function showStats() {
+    const state = dataManager.getGameState();
+    
+    let statsMessage = "📊 === CHARACTER STATS === 📊\n\n";
+    statsMessage += `🦸 Name: ${state.name}\n`;
+    statsMessage += `⭐ Level: ${state.level}\n`;
+    statsMessage += `✨ XP: ${state.xp}/${state.xpNeeded}\n`;
+    statsMessage += `❤️ HP: ${state.hp}/${state.maxHp}\n`;
+    statsMessage += `💰 Gold: ${state.gold}\n\n`;
+    
+    statsMessage += "=== COMBAT STATS ===\n";
+    statsMessage += `⚔️ Attack: ${state.attack || 15}\n`;
+    statsMessage += `🛡️ Defense: ${state.defense || 5}\n`;
+    statsMessage += `💥 Crit Chance: ${state.critChance || 10}%\n`;
+    statsMessage += `💨 Dodge Chance: ${state.dodgeChance || 5}%\n\n`;
+    
+    statsMessage += "=== EQUIPMENT ===\n";
+    statsMessage += `⚔️ Weapon: ${state.equipment?.weapon?.name || 'Iron Sword'}\n`;
+    statsMessage += `🛡️ Armor: ${state.equipment?.armor?.name || 'Leather Armor'}\n\n`;
+    
+    statsMessage += "=== ACHIEVEMENTS ===\n";
+    const unlockedCount = (state.achievements || []).length;
+    statsMessage += `🏆 Unlocked: ${unlockedCount}/${achievements.length}\n`;
+    statsMessage += `🗺️ Explorations: ${state.explorationCount || 0}\n`;
+    statsMessage += `👑 Bosses Defeated: ${state.bossesDefeated || 0}\n`;
+    
+    if (unlockedCount > 0) {
+        statsMessage += "\n=== UNLOCKED ACHIEVEMENTS ===\n";
+        (state.achievements || []).forEach(achievementId => {
+            const achievement = achievements.find(a => a.id === achievementId);
+            if (achievement) {
+                statsMessage += `🏆 ${achievement.name}\n`;
+            }
+        });
+    }
+    
+    document.getElementById('game-message').textContent = statsMessage;
+    document.getElementById('game-image').textContent = "📊";
 }
 
 function resetGame() {
@@ -618,6 +955,11 @@ document.getElementById('add-story-btn').addEventListener('click', addStory);
 document.getElementById('explore-btn').addEventListener('click', explore);
 document.getElementById('rest-btn').addEventListener('click', rest);
 document.getElementById('shop-btn').addEventListener('click', shop);
+document.getElementById('inventory-btn').addEventListener('click', () => {
+    const state = dataManager.getGameState();
+    showInventory(state);
+});
+document.getElementById('stats-btn').addEventListener('click', showStats);
 document.getElementById('reset-game-btn').addEventListener('click', resetGame);
 
 // Initialize
