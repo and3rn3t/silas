@@ -41,6 +41,18 @@ All data is stored in your browser's LocalStorage:
 - Fully client-side application
 - Mobile-friendly responsive design
 
+## 🚀 Deployment
+
+This website is deployed on Cloudflare Pages:
+- **Production URL**: https://silas-anderson.pages.dev
+- **Custom Domain**: https://silasanderson.us (when configured)
+
+### Deploy Updates
+To deploy changes to the live site:
+```bash
+wrangler pages deploy . --project-name=silas-anderson
+```
+
 ## 🎮 Have Fun!
 
 This is YOUR website - make it your own! Add pictures, write stories, and enjoy the adventure game!

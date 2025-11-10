@@ -1,0 +1,15 @@
+name = "silas-anderson"
+compatibility_date = "2025-11-10"
+
+# Pages configuration
+pages_build_output_dir = "."
+
+[env.production]
+name = "silas-anderson"
+
+# Static site configuration
+[env.production.vars]
+# No environment variables needed for static site
+
+# Custom domain configuration will be set up through Cloudflare dashboard
+# Domain: silasanderson.us
