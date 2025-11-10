@@ -3,7 +3,7 @@
 ## 🌐 Live Website
 
 - **Cloudflare Pages URL**: <https://silas-anderson.pages.dev>
-- **Custom Domain**: silasanderson.us (requires DNS configuration)
+- **Custom Domain**: <https://silasanderson.us> ✅ **ACTIVE**
 
 ## 🚀 Quick Deployment
 

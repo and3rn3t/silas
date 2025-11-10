@@ -48,7 +48,7 @@ All data is stored in your browser's LocalStorage:
 This website is deployed on Cloudflare Pages:
 
 - **Production URL**: <https://silas-anderson.pages.dev>
-- **Custom Domain**: <https://silasanderson.us> (when configured)
+- **Custom Domain**: <https://silasanderson.us> ✅ **LIVE**
 
 ### Deploy Updates
 
