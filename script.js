@@ -119,7 +119,26 @@ class DataManager {
             explorationCount: 0,
             inBattle: false,
             currentEnemy: null,
-            battleTurn: 'player'
+            battleTurn: 'player',
+            // Quest System Data
+            activeQuests: [],
+            completedQuests: [],
+            availableQuests: ['royal_duty'], // Starting quests available
+            unlockedLocations: ['castle'],
+            dailyQuestProgress: {},
+            lastDailyRefresh: new Date().toDateString(),
+            questStats: {
+                kills: 0,
+                resourcesCollected: 0,
+                locationsExplored: 0,
+                battlesByLocation: { castle: 0 },
+                itemsCollected: {},
+                bossesDefeated: {},
+                artifactsFound: 0,
+                daily_kills: 0,
+                daily_resources: 0,
+                daily_skills: 0
+            }
         };
         this.saveGameState(initialState);
     }
@@ -138,6 +157,216 @@ class DataManager {
 
     setAuthenticated(value) {
         sessionStorage.setItem('silas-authenticated', value ? 'true' : 'false');
+    }
+
+    // Quest Management Methods
+    getAvailableQuests() {
+        const gameState = this.getGameState();
+        const availableQuests = [];
+        
+        for (const questId in quests) {
+            const quest = quests[questId];
+            const isActive = gameState.activeQuests.includes(questId);
+            const isCompleted = gameState.completedQuests.includes(questId);
+            
+            if (!isActive && !isCompleted && this.canUnlockQuest(quest, gameState)) {
+                availableQuests.push(quest);
+            }
+        }
+        
+        return availableQuests;
+    }
+
+    canUnlockQuest(quest, gameState) {
+        const condition = quest.unlockCondition;
+        
+        // Check level requirement
+        if (condition.level && gameState.level < condition.level) {
+            return false;
+        }
+        
+        // Check bosses defeated requirement
+        if (condition.bossesDefeated && gameState.bossesDefeated < condition.bossesDefeated) {
+            return false;
+        }
+        
+        // Check quest completion requirement
+        if (condition.questCompleted && !gameState.completedQuests.includes(condition.questCompleted)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    acceptQuest(questId) {
+        const gameState = this.getGameState();
+        if (!gameState.activeQuests.includes(questId)) {
+            gameState.activeQuests.push(questId);
+            this.saveGameState(gameState);
+            return true;
+        }
+        return false;
+    }
+
+    checkQuestProgress(questId, gameState) {
+        const quest = quests[questId];
+        if (!quest) return false;
+        
+        const progress = {};
+        let isComplete = true;
+        
+        // Check different quest requirements
+        switch (quest.type) {
+            case 'kill':
+                progress.kills = gameState.questStats.kills;
+                isComplete = progress.kills >= quest.requirements.kills;
+                break;
+                
+            case 'collect':
+                for (const item in quest.requirements.items) {
+                    const needed = quest.requirements.items[item];
+                    const have = gameState.questStats.itemsCollected[item] || 0;
+                    progress[item] = have;
+                    if (have < needed) isComplete = false;
+                }
+                break;
+                
+            case 'location_clear':
+                for (const location in quest.requirements.battles_in_location) {
+                    const needed = quest.requirements.battles_in_location[location];
+                    const have = gameState.questStats.battlesByLocation[location] || 0;
+                    progress[location] = have;
+                    if (have < needed) isComplete = false;
+                }
+                break;
+                
+            case 'boss':
+                const bossName = quest.requirements.boss_defeat;
+                progress.boss = gameState.questStats.bossesDefeated[bossName] || false;
+                isComplete = progress.boss;
+                break;
+                
+            case 'survival':
+                const locationBattles = gameState.questStats.battlesByLocation[quest.location] || 0;
+                progress.battles = locationBattles;
+                isComplete = locationBattles >= quest.requirements[quest.location + '_battles'];
+                break;
+                
+            case 'explore':
+                progress.explored = gameState.questStats.artifactsFound;
+                progress.artifacts = gameState.questStats.artifactsFound;
+                isComplete = progress.explored >= quest.requirements.ruins_explored && 
+                           progress.artifacts >= quest.requirements.artifacts_found;
+                break;
+        }
+        
+        return { progress, isComplete };
+    }
+
+    completeQuest(questId) {
+        const gameState = this.getGameState();
+        const quest = quests[questId];
+        
+        if (!quest || !gameState.activeQuests.includes(questId)) {
+            return false;
+        }
+        
+        // Remove from active quests
+        gameState.activeQuests = gameState.activeQuests.filter(id => id !== questId);
+        
+        // Add to completed quests
+        gameState.completedQuests.push(questId);
+        
+        // Apply rewards
+        if (quest.rewards.xp) {
+            gameState.xp += quest.rewards.xp;
+        }
+        if (quest.rewards.gold) {
+            gameState.gold += quest.rewards.gold;
+        }
+        if (quest.rewards.item) {
+            gameState.inventory.push({
+                name: quest.rewards.item,
+                type: 'quest_reward',
+                description: `Reward from ${quest.name}`
+            });
+        }
+        if (quest.rewards.unlocks) {
+            if (!gameState.unlockedLocations.includes(quest.rewards.unlocks)) {
+                gameState.unlockedLocations.push(quest.rewards.unlocks);
+            }
+        }
+        
+        this.saveGameState(gameState);
+        return true;
+    }
+
+    updateQuestProgress(action, data) {
+        const gameState = this.getGameState();
+        
+        switch (action) {
+            case 'kill':
+                gameState.questStats.kills++;
+                gameState.questStats.daily_kills++;
+                break;
+                
+            case 'collect_item':
+                const item = data.item;
+                gameState.questStats.itemsCollected[item] = (gameState.questStats.itemsCollected[item] || 0) + 1;
+                gameState.questStats.resourcesCollected++;
+                gameState.questStats.daily_resources++;
+                break;
+                
+            case 'battle_location':
+                const location = data.location;
+                gameState.questStats.battlesByLocation[location] = (gameState.questStats.battlesByLocation[location] || 0) + 1;
+                break;
+                
+            case 'defeat_boss':
+                const boss = data.boss;
+                gameState.questStats.bossesDefeated[boss] = true;
+                break;
+                
+            case 'use_skill':
+                gameState.questStats.daily_skills++;
+                break;
+                
+            case 'find_artifact':
+                gameState.questStats.artifactsFound++;
+                break;
+        }
+        
+        // Check if any active quests are completed
+        const completedQuests = [];
+        for (const questId of gameState.activeQuests) {
+            const { isComplete } = this.checkQuestProgress(questId, gameState);
+            if (isComplete) {
+                completedQuests.push(questId);
+            }
+        }
+        
+        // Complete the quests
+        for (const questId of completedQuests) {
+            this.completeQuest(questId);
+            showMessage(`Quest completed: ${quests[questId].name}!`, 'success');
+        }
+        
+        this.saveGameState(gameState);
+    }
+
+    refreshDailyQuests() {
+        const gameState = this.getGameState();
+        const today = new Date().toDateString();
+        
+        if (gameState.lastDailyRefresh !== today) {
+            // Reset daily progress
+            gameState.questStats.daily_kills = 0;
+            gameState.questStats.daily_resources = 0;
+            gameState.questStats.daily_skills = 0;
+            gameState.lastDailyRefresh = today;
+            
+            this.saveGameState(gameState);
+        }
     }
 }
 
@@ -346,24 +575,92 @@ function deleteStory(index) {
 // Game Section
 const gameScenarios = {
     castle: {
-        message: "You stand at the castle gates. The morning sun shines on your armor.",
-        image: "🏰"
+        name: "🏰 Royal Castle",
+        message: "You stand at the majestic castle gates. Knights patrol the walls.",
+        image: "🏰",
+        level: 1,
+        specialEncounters: ["Royal Guard", "Court Mage", "Castle Knight"],
+        resources: ["Honor Tokens", "Royal Seal", "Knight's Blessing"],
+        questGiver: true,
+        description: "The seat of power in the realm. Knights and nobles gather here.",
+        unlockCondition: null // Always available
     },
     forest: {
-        message: "You venture into the mysterious forest. Strange sounds echo through the trees.",
-        image: "🌲"
+        name: "🌲 Enchanted Forest",
+        message: "Ancient trees tower above you. Magic flows through every leaf.",
+        image: "🌲",
+        level: 2,
+        specialEncounters: ["Forest Guardian", "Wild Elf", "Dire Wolf"],
+        resources: ["Mystical Herbs", "Elven Wood", "Forest Essence"],
+        questGiver: true,
+        description: "A magical woodland where nature spirits dwell.",
+        unlockCondition: { level: 3 }
     },
     cave: {
-        message: "You enter a dark cave. You hear something moving in the shadows...",
-        image: "🕳️"
+        name: "🕳️ Crystal Caverns",
+        message: "Glowing crystals illuminate the underground passages.",
+        image: "🕳️",
+        level: 3,
+        specialEncounters: ["Crystal Golem", "Cave Troll", "Gem Spirit"],
+        resources: ["Rare Crystals", "Cave Minerals", "Glowing Gems"],
+        questGiver: false,
+        description: "Deep caves filled with precious gems and dangerous creatures.",
+        unlockCondition: { level: 5 }
     },
     mountain: {
-        message: "You climb the snowy mountain peak. The view is breathtaking!",
-        image: "⛰️"
+        name: "⛰️ Dragon's Peak",
+        message: "The air grows thin as you ascend the legendary mountain.",
+        image: "⛰️",
+        level: 4,
+        specialEncounters: ["Mountain Dragon", "Storm Giant", "Ice Elemental"],
+        resources: ["Dragon Scales", "Mountain Stone", "Storm Essence"],
+        questGiver: true,
+        description: "The highest peak in the realm, home to ancient dragons.",
+        unlockCondition: { level: 8 }
     },
     village: {
-        message: "You arrive at a peaceful village. The locals greet you warmly.",
-        image: "🏘️"
+        name: "🏘️ Merchant Village",
+        message: "Bustling traders and craftsmen fill the marketplace.",
+        image: "🏘️",
+        level: 1,
+        specialEncounters: ["Village Chief", "Master Blacksmith", "Traveling Merchant"],
+        resources: ["Trade Goods", "Crafting Materials", "Local Currency"],
+        questGiver: true,
+        description: "A thriving trade hub where adventurers resupply.",
+        unlockCondition: null // Always available
+    },
+    swamp: {
+        name: "🐸 Mystic Swamp",
+        message: "Murky waters and twisted trees create an eerie atmosphere.",
+        image: "🐸",
+        level: 3,
+        specialEncounters: ["Swamp Witch", "Bog Monster", "Will O' Wisp"],
+        resources: ["Witch's Brew", "Swamp Gas", "Cursed Moss"],
+        questGiver: true,
+        description: "A treacherous wetland where dark magic thrives.",
+        unlockCondition: { level: 6, questCompleted: "forest_guardian" }
+    },
+    desert: {
+        name: "🏜️ Scorching Desert",
+        message: "Endless sand dunes stretch beneath the blazing sun.",
+        image: "🏜️",
+        level: 4,
+        specialEncounters: ["Sand Elemental", "Desert Nomad", "Mirage Spirit"],
+        resources: ["Desert Glass", "Sun Crystals", "Nomad Relics"],
+        questGiver: true,
+        description: "A harsh wasteland hiding ancient secrets.",
+        unlockCondition: { level: 10, bossesDefeated: 2 }
+    },
+    ruins: {
+        name: "🏛️ Ancient Ruins",
+        message: "Crumbling stone structures tell tales of a lost civilization.",
+        image: "🏛️",
+        level: 5,
+        specialEncounters: ["Ancient Guardian", "Lost Spirit", "Ruin Keeper"],
+        resources: ["Ancient Artifacts", "Runic Stones", "Lost Knowledge"],
+        questGiver: true,
+        description: "Mysterious ruins of an ancient magical empire.",
+        unlockCondition: { level: 12, questCompleted: "dragon_peak_trial" }
     }
 };
 
@@ -557,6 +854,130 @@ const skills = {
     }
 };
 
+const quests = {
+    // Castle Quests
+    royal_duty: {
+        id: "royal_duty",
+        name: "Royal Duty",
+        description: "Prove your worth to the castle by defeating 5 enemies",
+        type: "kill",
+        location: "castle",
+        giver: "Castle Captain",
+        requirements: { kills: 5 },
+        rewards: { xp: 100, gold: 150, item: "Knight's Blade" },
+        unlockCondition: { level: 2 },
+        completed: false
+    },
+    
+    // Forest Quests  
+    forest_guardian: {
+        id: "forest_guardian",
+        name: "Guardian of the Woods",
+        description: "Collect 3 Forest Essence to appease the Forest Guardian",
+        type: "collect",
+        location: "forest",
+        giver: "Elder Druid",
+        requirements: { items: { "Forest Essence": 3 } },
+        rewards: { xp: 200, gold: 100, item: "Nature's Blessing", unlocks: "swamp" },
+        unlockCondition: { level: 4 },
+        completed: false
+    },
+    
+    // Village Quests
+    merchant_problems: {
+        id: "merchant_problems",
+        name: "Merchant's Problems",
+        description: "Clear the trade routes by defeating bandits near the village",
+        type: "location_clear",
+        location: "village", 
+        giver: "Merchant Leader",
+        requirements: { battles_in_location: { village: 8 } },
+        rewards: { xp: 150, gold: 300, item: "Merchant's Ring" },
+        unlockCondition: { level: 3 },
+        completed: false
+    },
+    
+    // Mountain Quests
+    dragon_peak_trial: {
+        id: "dragon_peak_trial",
+        name: "Trial of the Peak",
+        description: "Defeat the Mountain Dragon to prove your strength",
+        type: "boss",
+        location: "mountain",
+        giver: "Mountain Sage",
+        requirements: { boss_defeat: "Mountain Dragon" },
+        rewards: { xp: 500, gold: 400, item: "Dragon Slayer Title", unlocks: "ruins" },
+        unlockCondition: { level: 10, bossesDefeated: 1 },
+        completed: false
+    },
+    
+    // Swamp Quests
+    witch_bargain: {
+        id: "witch_bargain", 
+        name: "The Witch's Bargain",
+        description: "Bring the Swamp Witch 5 Rare Crystals from the caverns",
+        type: "collect",
+        location: "swamp",
+        giver: "Swamp Witch",
+        requirements: { items: { "Rare Crystals": 5 } },
+        rewards: { xp: 300, gold: 200, item: "Witch's Potion", skill: "poison_resistance" },
+        unlockCondition: { level: 7, questCompleted: "forest_guardian" },
+        completed: false
+    },
+    
+    // Desert Quests
+    desert_nomad: {
+        id: "desert_nomad",
+        name: "The Desert Nomad's Test",
+        description: "Survive 10 battles in the scorching desert",
+        type: "survival",
+        location: "desert",
+        giver: "Desert Nomad",
+        requirements: { desert_battles: 10 },
+        rewards: { xp: 400, gold: 350, item: "Desert Cloak", skill: "heat_resistance" },
+        unlockCondition: { level: 12 },
+        completed: false
+    },
+    
+    // Ruins Quests
+    ancient_secret: {
+        id: "ancient_secret",
+        name: "Ancient Secrets",
+        description: "Uncover the mystery of the lost civilization",
+        type: "explore",
+        location: "ruins",
+        giver: "Ancient Spirit",
+        requirements: { ruins_explored: 15, artifacts_found: 3 },
+        rewards: { xp: 600, gold: 500, item: "Ancient Wisdom", ultimate_skill: true },
+        unlockCondition: { level: 15, questCompleted: "dragon_peak_trial" },
+        completed: false
+    }
+};
+
+const dailyQuests = [
+    {
+        name: "Daily Hunt",
+        description: "Defeat 3 enemies of any type",
+        requirements: { daily_kills: 3 },
+        rewards: { xp: 50, gold: 75 },
+        refreshes: "daily"
+    },
+    {
+        name: "Resource Gatherer", 
+        description: "Collect 2 resources from any location",
+        requirements: { daily_resources: 2 },
+        rewards: { xp: 40, gold: 100 },
+        refreshes: "daily"
+    },
+    {
+        name: "Skill Practice",
+        description: "Use 5 skills in combat",
+        requirements: { daily_skills: 5 },
+        rewards: { xp: 60, gold: 50 },
+        refreshes: "daily"
+    }
+];
+
 const achievements = [
     { id: "first_kill", name: "First Blood", description: "Defeat your first enemy", reward: 50 },
     { id: "explorer", name: "Explorer", description: "Explore 10 locations", reward: 100 },
@@ -565,11 +986,244 @@ const achievements = [
     { id: "dragon_slayer", name: "Dragon Slayer", description: "Defeat the Ancient Dragon", reward: 1000 },
     { id: "boss_hunter", name: "Boss Hunter", description: "Defeat 5 boss enemies", reward: 750 },
     { id: "skill_master", name: "Skill Master", description: "Use 50 skills in combat", reward: 300 },
-    { id: "class_master", name: "Class Master", description: "Master your chosen class", reward: 500 }
+    { id: "class_master", name: "Class Master", description: "Master your chosen class", reward: 500 },
+    { id: "quest_master", name: "Quest Master", description: "Complete 5 quests", reward: 400 },
+    { id: "location_master", name: "Location Master", description: "Unlock all locations", reward: 800 }
 ];
 
 function loadGame() {
     updateGameDisplay();
+    updateLocationSelector();
+    updateQuestDisplay();
+}
+
+function updateLocationSelector() {
+    const state = dataManager.getGameState();
+    const locationGrid = document.getElementById('location-grid');
+    
+    if (!locationGrid) return;
+    
+    locationGrid.innerHTML = '';
+    
+    for (const locationId in gameScenarios) {
+        const location = gameScenarios[locationId];
+        const isUnlocked = state.unlockedLocations.includes(locationId);
+        const isActive = state.currentLocation === locationId;
+        const canAccess = !location.levelRequirement || state.level >= location.levelRequirement;
+        
+        const locationCard = document.createElement('div');
+        locationCard.className = 'location-card';
+        
+        if (isActive) {
+            locationCard.classList.add('active');
+        } else if (!isUnlocked || !canAccess) {
+            locationCard.classList.add('locked');
+        }
+        
+        locationCard.innerHTML = `
+            <span class="location-emoji">${location.image}</span>
+            <div class="location-name">${locationId.charAt(0).toUpperCase() + locationId.slice(1)}</div>
+            <div class="location-level">
+                ${location.levelRequirement ? `Level ${location.levelRequirement}+` : 'Available'}
+            </div>
+        `;
+        
+        if (isUnlocked && canAccess) {
+            locationCard.addEventListener('click', () => selectLocation(locationId));
+        }
+        
+        locationGrid.appendChild(locationCard);
+    }
+}
+
+function selectLocation(locationId) {
+    const state = dataManager.getGameState();
+    state.currentLocation = locationId;
+    dataManager.saveGameState(state);
+    updateLocationSelector();
+    
+    const locationData = gameScenarios[locationId];
+    document.getElementById('game-message').textContent = 
+        `You are now at: ${locationId.charAt(0).toUpperCase() + locationId.slice(1)}\n\n${locationData.description}`;
+    document.getElementById('game-image').textContent = locationData.image;
+}
+
+function updateQuestDisplay() {
+    const state = dataManager.getGameState();
+    const activeQuestsDiv = document.getElementById('active-quests');
+    const availableQuestsDiv = document.getElementById('available-quests');
+    
+    if (!activeQuestsDiv || !availableQuestsDiv) return;
+    
+    // Update active quests
+    activeQuestsDiv.innerHTML = '';
+    if (state.activeQuests && state.activeQuests.length > 0) {
+        state.activeQuests.forEach(questId => {
+            const quest = quests[questId];
+            if (quest) {
+                const { progress, isComplete } = dataManager.checkQuestProgress(questId, state);
+                const questElement = createQuestElement(quest, progress, isComplete, false);
+                activeQuestsDiv.appendChild(questElement);
+            }
+        });
+    } else {
+        activeQuestsDiv.innerHTML = '<div class="empty-message">No active quests</div>';
+    }
+    
+    // Update available quests
+    availableQuestsDiv.innerHTML = '';
+    const availableQuests = dataManager.getAvailableQuests();
+    if (availableQuests.length > 0) {
+        availableQuests.forEach(quest => {
+            const questElement = createQuestElement(quest, null, false, true);
+            availableQuestsDiv.appendChild(questElement);
+        });
+    } else {
+        availableQuestsDiv.innerHTML = '<div class="empty-message">No quests available</div>';
+    }
+}
+
+function createQuestElement(quest, progress, isComplete, isAvailable) {
+    const questDiv = document.createElement('div');
+    questDiv.className = `quest-item ${isAvailable ? 'available' : ''}`;
+    
+    let progressText = '';
+    if (progress && !isComplete) {
+        switch (quest.type) {
+            case 'kill':
+                progressText = `Progress: ${progress.kills || 0}/${quest.requirements.kills}`;
+                break;
+            case 'collect':
+                const collectProgress = [];
+                for (const item in quest.requirements.items) {
+                    const needed = quest.requirements.items[item];
+                    const have = progress[item] || 0;
+                    collectProgress.push(`${item}: ${have}/${needed}`);
+                }
+                progressText = `Progress: ${collectProgress.join(', ')}`;
+                break;
+            case 'location_clear':
+                const locationProgress = [];
+                for (const location in quest.requirements.battles_in_location) {
+                    const needed = quest.requirements.battles_in_location[location];
+                    const have = progress[location] || 0;
+                    locationProgress.push(`${location}: ${have}/${needed}`);
+                }
+                progressText = `Progress: ${locationProgress.join(', ')}`;
+                break;
+            case 'boss':
+                progressText = progress.boss ? 'Boss defeated!' : 'Boss not defeated yet';
+                break;
+            case 'survival':
+                progressText = `Battles: ${progress.battles || 0}/${quest.requirements[quest.location + '_battles']}`;
+                break;
+            case 'explore':
+                progressText = `Explored: ${progress.explored || 0}/${quest.requirements.ruins_explored}, Artifacts: ${progress.artifacts || 0}/${quest.requirements.artifacts_found}`;
+                break;
+        }
+    } else if (isComplete) {
+        progressText = '✅ Ready to complete!';
+    }
+    
+    let rewardsText = '';
+    if (quest.rewards) {
+        const rewards = [];
+        if (quest.rewards.xp) rewards.push(`${quest.rewards.xp} XP`);
+        if (quest.rewards.gold) rewards.push(`${quest.rewards.gold} Gold`);
+        if (quest.rewards.item) rewards.push(quest.rewards.item);
+        if (quest.rewards.unlocks) rewards.push(`Unlocks ${quest.rewards.unlocks}`);
+        rewardsText = `Rewards: ${rewards.join(', ')}`;
+    }
+    
+    questDiv.innerHTML = `
+        <div class="quest-name">
+            ${quest.name}
+            ${isAvailable ? '<button class="accept-quest-btn" onclick="acceptQuest(\'' + quest.id + '\')">Accept</button>' : ''}
+        </div>
+        <div class="quest-giver">📍 ${quest.giver} (${quest.location})</div>
+        <div class="quest-description">${quest.description}</div>
+        ${progressText ? `<div class="quest-progress">${progressText}</div>` : ''}
+        <div class="quest-rewards">${rewardsText}</div>
+    `;
+    
+    return questDiv;
+}
+
+function acceptQuest(questId) {
+    if (dataManager.acceptQuest(questId)) {
+        showMessage(`Quest accepted: ${quests[questId].name}!`, 'success');
+        updateQuestDisplay();
+    } else {
+        showMessage('Failed to accept quest!', 'error');
+    }
+}
+
+function showQuestDetails() {
+    const state = dataManager.getGameState();
+    let message = "🎯 QUEST LOG 🎯\n\n";
+    
+    // Active Quests
+    if (state.activeQuests && state.activeQuests.length > 0) {
+        message += "📋 ACTIVE QUESTS:\n";
+        state.activeQuests.forEach(questId => {
+            const quest = quests[questId];
+            if (quest) {
+                const { progress, isComplete } = dataManager.checkQuestProgress(questId, state);
+                message += `\n• ${quest.name} (${quest.location})\n`;
+                message += `  ${quest.description}\n`;
+                
+                // Show progress
+                if (isComplete) {
+                    message += `  ✅ READY TO COMPLETE!\n`;
+                } else {
+                    switch (quest.type) {
+                        case 'kill':
+                            message += `  Progress: ${progress.kills || 0}/${quest.requirements.kills} enemies\n`;
+                            break;
+                        case 'collect':
+                            for (const item in quest.requirements.items) {
+                                const needed = quest.requirements.items[item];
+                                const have = progress[item] || 0;
+                                message += `  ${item}: ${have}/${needed}\n`;
+                            }
+                            break;
+                        case 'location_clear':
+                            for (const location in quest.requirements.battles_in_location) {
+                                const needed = quest.requirements.battles_in_location[location];
+                                const have = progress[location] || 0;
+                                message += `  ${location} battles: ${have}/${needed}\n`;
+                            }
+                            break;
+                        case 'boss':
+                            message += `  ${progress.boss ? '✅' : '❌'} Defeat ${quest.requirements.boss_defeat}\n`;
+                            break;
+                    }
+                }
+            }
+        });
+    } else {
+        message += "📋 No active quests\n";
+    }
+    
+    // Available Quests
+    const availableQuests = dataManager.getAvailableQuests();
+    if (availableQuests.length > 0) {
+        message += "\n\n🔓 AVAILABLE QUESTS:\n";
+        availableQuests.forEach(quest => {
+            message += `\n• ${quest.name} (${quest.location})\n`;
+            message += `  ${quest.description}\n`;
+            message += `  Giver: ${quest.giver}\n`;
+        });
+        message += "\n💡 Visit quest locations to accept new quests!";
+    }
+    
+    // Completed Quests
+    if (state.completedQuests && state.completedQuests.length > 0) {
+        message += `\n\n✅ COMPLETED: ${state.completedQuests.length} quests`;
+    }
+    
+    document.getElementById('game-message').textContent = message;
+    document.getElementById('game-image').textContent = "📜";
 }
 
 function updateGameDisplay() {
@@ -656,61 +1310,199 @@ function updateEnemyDisplay(enemy) {
 
 function explore() {
     const state = dataManager.getGameState();
+    const currentLocation = state.currentLocation || 'castle';
+    const locationData = gameScenarios[currentLocation];
+    
+    // Check if player can access this location
+    if (!state.unlockedLocations.includes(currentLocation)) {
+        showMessage(`You cannot access ${currentLocation} yet!`, 'error');
+        return;
+    }
+    
+    // Check level requirement
+    if (locationData.levelRequirement && state.level < locationData.levelRequirement) {
+        showMessage(`You need to be level ${locationData.levelRequirement} to explore ${currentLocation}!`, 'error');
+        return;
+    }
+    
     state.explorationCount = (state.explorationCount || 0) + 1;
     
-    const locations = Object.keys(gameScenarios);
-    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-    const scenario = gameScenarios[randomLocation];
+    // Update quest progress for location exploration
+    dataManager.updateQuestProgress('battle_location', { location: currentLocation });
     
-    state.currentLocation = randomLocation;
+    // Check for special encounters based on location
+    const encounterChance = Math.random();
+    let message = `${locationData.message}\n\n`;
     
-    // Enhanced encounter system (60% chance)
-    if (Math.random() < 0.6) {
-        const encounter = selectRandomEncounter();
+    // Special encounters (10% chance)
+    if (encounterChance < 0.1 && locationData.specialEncounters.length > 0) {
+        const specialEncounter = locationData.specialEncounters[Math.floor(Math.random() * locationData.specialEncounters.length)];
         
-        document.getElementById('game-message').textContent = 
-            `${scenario.message}\n\nA ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
-        document.getElementById('game-image').textContent = encounter.image;
+        if (specialEncounter.type === 'boss' && Math.random() < 0.3) {
+            const bossEnemy = encounters.find(e => e.name === specialEncounter.name);
+            if (bossEnemy) {
+                message += `⚠️ ${specialEncounter.name} emerges! ${specialEncounter.description}`;
+                document.getElementById('game-message').textContent = message;
+                document.getElementById('game-image').textContent = locationData.image;
+                startBattle(state, bossEnemy);
+                dataManager.saveGameState(state);
+                return;
+            }
+        } else if (specialEncounter.type === 'quest_giver') {
+            // Check for available quests from this location
+            const availableQuests = dataManager.getAvailableQuests().filter(q => q.location === currentLocation);
+            if (availableQuests.length > 0) {
+                const quest = availableQuests[0];
+                message += `🎯 ${quest.giver}: "${quest.description}"\n\nQuest available: ${quest.name}`;
+                document.getElementById('game-message').textContent = message;
+                document.getElementById('game-image').textContent = locationData.image;
+                dataManager.saveGameState(state);
+                loadGame(); // Refresh display to show new quest
+                return;
+            }
+        } else if (specialEncounter.type === 'resource') {
+            // Resource gathering
+            const resourceName = specialEncounter.name;
+            const resourceAmount = Math.floor(Math.random() * 3) + 1;
+            
+            state.inventory = state.inventory || [];
+            let existingResource = state.inventory.find(item => item.name === resourceName);
+            
+            if (existingResource) {
+                existingResource.quantity = (existingResource.quantity || 1) + resourceAmount;
+            } else {
+                state.inventory.push({
+                    name: resourceName,
+                    type: 'resource',
+                    quantity: resourceAmount,
+                    description: specialEncounter.description
+                });
+            }
+            
+            message += `🌿 You gathered ${resourceAmount}x ${resourceName}! ${specialEncounter.description}`;
+            dataManager.updateQuestProgress('collect_item', { item: resourceName });
+        }
+    }
+    // Regular encounters (50% chance)
+    else if (encounterChance < 0.6) {
+        const encounter = selectLocationEncounter(currentLocation, state.level);
+        
+        message += `A ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
+        document.getElementById('game-message').textContent = message;
+        document.getElementById('game-image').textContent = locationData.image;
         
         // Start turn-based battle
         startBattle(state, encounter);
         dataManager.saveGameState(state);
-        return; // Exit explore function, battle will handle the rest
-    } else {
-        // Enhanced treasure system
+        return;
+    }
+    // Treasure/Resource finding (40% chance)
+    else {
         const treasureType = Math.random();
-        let message = `${scenario.message}\n\n`;
         
-        if (treasureType < 0.7) {
-            // Gold treasure
-            const goldFound = Math.floor(Math.random() * 50) + 20;
-            state.gold += goldFound;
-            message += `💰 You found ${goldFound} gold coins!`;
-        } else if (treasureType < 0.9) {
+        if (treasureType < 0.4) {
+            // Location-specific resources
+            if (locationData.resources.length > 0) {
+                const resource = locationData.resources[Math.floor(Math.random() * locationData.resources.length)];
+                const amount = Math.floor(Math.random() * 2) + 1;
+                
+                state.inventory = state.inventory || [];
+                let existingResource = state.inventory.find(item => item.name === resource);
+                
+                if (existingResource) {
+                    existingResource.quantity = (existingResource.quantity || 1) + amount;
+                } else {
+                    state.inventory.push({
+                        name: resource,
+                        type: 'resource',
+                        quantity: amount,
+                        description: `Collected from ${currentLocation}`
+                    });
+                }
+                
+                message += `🌿 You found ${amount}x ${resource}!`;
+                dataManager.updateQuestProgress('collect_item', { item: resource });
+            } else {
+                // Fallback to gold
+                const goldFound = Math.floor(Math.random() * 50) + 20;
+                state.gold += goldFound;
+                message += `💰 You found ${goldFound} gold coins!`;
+            }
+        } else if (treasureType < 0.8) {
             // Equipment treasure
             const equipmentType = Math.random() < 0.5 ? 'weapons' : 'armor';
-            const items = equipment[equipmentType].filter(item => item.rarity === 'common' || item.rarity === 'uncommon');
+            const items = equipment[equipmentType].filter(item => 
+                item.rarity === 'common' || (item.rarity === 'uncommon' && state.level >= 5)
+            );
             const foundEquipment = items[Math.floor(Math.random() * items.length)];
             
             state.inventory = state.inventory || [];
             state.inventory.push(foundEquipment);
             message += `⚔️ You found ${foundEquipment.name}! Added to inventory.`;
         } else {
-            // Rare gem
-            const gemValue = Math.floor(Math.random() * 100) + 50;
-            state.gold += gemValue;
-            message += `💎 You found a rare gem worth ${gemValue} gold!`;
+            // Gold treasure
+            const goldFound = Math.floor(Math.random() * 100) + 30;
+            state.gold += goldFound;
+            message += `� You discovered a treasure cache with ${goldFound} gold!`;
         }
-        
-        document.getElementById('game-message').textContent = message;
-        document.getElementById('game-image').textContent = scenario.image;
     }
+    
+    document.getElementById('game-message').textContent = message;
+    document.getElementById('game-image').textContent = locationData.image;
     
     // Check achievements
     checkAchievements(state);
     
     dataManager.saveGameState(state);
     updateGameDisplay();
+}
+
+function selectLocationEncounter(location, playerLevel) {
+    const locationData = gameScenarios[location];
+    let validEncounters = encounters.filter(enemy => {
+        return enemy.level <= playerLevel + 2 && enemy.level >= Math.max(1, playerLevel - 2);
+    });
+    
+    // Filter by location if specified
+    if (locationData.preferredEnemies && locationData.preferredEnemies.length > 0) {
+        const preferredEncounters = validEncounters.filter(enemy => 
+            locationData.preferredEnemies.includes(enemy.name)
+        );
+        if (preferredEncounters.length > 0) {
+            validEncounters = preferredEncounters;
+        }
+    }
+    
+    const rand = Math.random();
+    
+    if (rand < 0.02 && playerLevel >= 8) {
+        // 2% chance for boss (high level only)
+        const bossEnemies = validEncounters.filter(e => e.rarity === 'boss');
+        if (bossEnemies.length > 0) {
+            return bossEnemies[Math.floor(Math.random() * bossEnemies.length)];
+        }
+    } else if (rand < 0.15) {
+        // 13% chance for rare
+        const rareEnemies = validEncounters.filter(e => e.rarity === 'rare');
+        if (rareEnemies.length > 0) {
+            return rareEnemies[Math.floor(Math.random() * rareEnemies.length)];
+        }
+    } else if (rand < 0.45) {
+        // 30% chance for uncommon
+        const uncommonEnemies = validEncounters.filter(e => e.rarity === 'uncommon');
+        if (uncommonEnemies.length > 0) {
+            return uncommonEnemies[Math.floor(Math.random() * uncommonEnemies.length)];
+        }
+    }
+    
+    // Default to common enemies (55% chance or fallback)
+    const commonEnemies = validEncounters.filter(e => e.rarity === 'common');
+    if (commonEnemies.length > 0) {
+        return commonEnemies[Math.floor(Math.random() * commonEnemies.length)];
+    }
+    
+    // Ultimate fallback - return any valid encounter
+    return validEncounters[Math.floor(Math.random() * validEncounters.length)];
 }
 
 function selectRandomEncounter() {
@@ -799,6 +1591,9 @@ function performPlayerAction(actionType, skillKey = null) {
             playerDamage = result.damage || 0;
             manaCost = result.manaCost || 0;
             battleLog = result.message;
+            
+            // Track skill usage for quests
+            dataManager.updateQuestProgress('use_skill', { skill: skillKey });
             break;
     }
     
@@ -983,6 +1778,9 @@ function endBattle(state, victory, battleLog) {
         finalMessage += `✨ +${enemy.xp} XP\n`;
         finalMessage += `💰 +${enemy.gold} Gold\n`;
         
+        // Update quest progress for kill
+        dataManager.updateQuestProgress('kill', { enemy: enemy.name });
+        
         // Check for loot drops
         if (Math.random() < 0.3 && enemy.loot && enemy.loot.length > 0) {
             const loot = enemy.loot[Math.floor(Math.random() * enemy.loot.length)];
@@ -995,6 +1793,9 @@ function endBattle(state, victory, battleLog) {
         if (enemy.rarity === 'boss') {
             state.bossesDefeated = (state.bossesDefeated || 0) + 1;
             finalMessage += `\n👑 EPIC BOSS DEFEATED!\n`;
+            
+            // Update quest progress for boss defeat
+            dataManager.updateQuestProgress('defeat_boss', { boss: enemy.name });
         }
         
         // Level up check
@@ -1002,6 +1803,9 @@ function endBattle(state, victory, battleLog) {
         if (leveledUp) {
             finalMessage += `\n🎉 LEVEL UP! Now level ${state.level}!\n`;
             finalMessage += `❤️ HP restored! Stats increased!\n`;
+            
+            // Check if new locations are unlocked
+            checkLocationUnlocks(state);
         }
         
     } else {
@@ -1022,6 +1826,44 @@ function endBattle(state, victory, battleLog) {
     checkAchievements(state);
     dataManager.saveGameState(state);
     updateGameDisplay();
+    updateQuestDisplay(); // Refresh quest display after battle
+}
+
+function checkLocationUnlocks(state) {
+    for (const locationId in gameScenarios) {
+        const location = gameScenarios[locationId];
+        
+        if (!state.unlockedLocations.includes(locationId)) {
+            let canUnlock = true;
+            
+            // Check level requirement
+            if (location.levelRequirement && state.level < location.levelRequirement) {
+                canUnlock = false;
+            }
+            
+            // Check unlock conditions
+            if (location.unlockCondition) {
+                const condition = location.unlockCondition;
+                
+                if (condition.level && state.level < condition.level) {
+                    canUnlock = false;
+                }
+                
+                if (condition.bossesDefeated && state.bossesDefeated < condition.bossesDefeated) {
+                    canUnlock = false;
+                }
+                
+                if (condition.questCompleted && !state.completedQuests.includes(condition.questCompleted)) {
+                    canUnlock = false;
+                }
+            }
+            
+            if (canUnlock) {
+                state.unlockedLocations.push(locationId);
+                showMessage(`New location unlocked: ${locationId.charAt(0).toUpperCase() + locationId.slice(1)}!`, 'success');
+            }
+        }
+    }
 }
 
 function checkLevelUp(state) {
@@ -1470,6 +2312,7 @@ document.getElementById('inventory-btn').addEventListener('click', () => {
 });
 document.getElementById('stats-btn').addEventListener('click', showStats);
 document.getElementById('choose-class-btn').addEventListener('click', chooseClass);
+document.getElementById('quests-btn').addEventListener('click', showQuestDetails);
 document.getElementById('reset-game-btn').addEventListener('click', resetGame);
 
 // Battle action event listeners
