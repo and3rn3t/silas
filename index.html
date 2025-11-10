@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silas Anderson - Personal Website</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <h1 class="logo">🐱 Silas Anderson 🎮</h1>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
+                <li><a href="#gallery" class="nav-link" data-section="gallery">Gallery</a></li>
+                <li><a href="#stories" class="nav-link" data-section="stories">Stories</a></li>
+                <li><a href="#game" class="nav-link" data-section="game">Adventure Game</a></li>
+                <li><a href="#admin" class="nav-link" data-section="admin" id="admin-nav-link">✏️ Edit</a></li>
+            </ul>
+        </nav>
+
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <h2>Welcome to My World!</h2>
+                <div class="bio-container">
+                    <h3>About Me</h3>
+                    <div id="bio-display" class="bio-display">
+                        <p>Hi! I'm Silas Anderson, and I love exploring new worlds through anime and games!</p>
+                    </div>
+                </div>
+                <div class="interests-container">
+                    <h3>My Interests</h3>
+                    <div id="interests-display" class="interests-display">
+                        <div class="interest-tag">🎌 Anime</div>
+                        <div class="interest-tag">🐱 Cats</div>
+                        <div class="interest-tag">🗺️ Adventure Games</div>
+                        <div class="interest-tag">👊 Fighting Games</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section -->
+        <section id="gallery" class="section">
+            <h2>My Gallery</h2>
+            <div id="gallery-grid" class="gallery-grid">
+                <!-- Gallery items will be loaded here -->
+            </div>
+            <p class="empty-message" id="gallery-empty">No pictures yet. Use the Edit section to add some!</p>
+        </section>
+
+        <!-- Stories Section -->
+        <section id="stories" class="section">
+            <h2>My Stories</h2>
+            <div id="stories-list" class="stories-list">
+                <!-- Stories will be loaded here -->
+            </div>
+            <p class="empty-message" id="stories-empty">No stories yet. Use the Edit section to add some!</p>
+        </section>
+
+        <!-- Adventure Game Section -->
+        <section id="game" class="section">
+            <h2>🗡️ Mini Adventure Quest 🛡️</h2>
+            <div class="game-container">
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Hero:</span>
+                        <span id="hero-name">Brave Adventurer</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Level:</span>
+                        <span id="hero-level">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">XP:</span>
+                        <span id="hero-xp">0</span>/<span id="hero-xp-needed">100</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">HP:</span>
+                        <span id="hero-hp">100</span>/<span id="hero-max-hp">100</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Gold:</span>
+                        <span id="hero-gold">0</span>
+                    </div>
+                </div>
+                
+                <div class="game-display">
+                    <div id="game-message" class="game-message">
+                        Welcome, brave hero! Your adventure begins here. Choose your path wisely!
+                    </div>
+                    <div id="game-image" class="game-image">🏰</div>
+                </div>
+
+                <div class="game-actions">
+                    <button class="game-btn" id="explore-btn">🗺️ Explore</button>
+                    <button class="game-btn" id="rest-btn">😴 Rest</button>
+                    <button class="game-btn" id="shop-btn">🏪 Shop</button>
+                    <button class="game-btn" id="reset-game-btn">🔄 New Game</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Section -->
+        <section id="login" class="section">
+            <h2>🔐 Login</h2>
+            <div class="login-container">
+                <p>This area is for Silas only. Please enter your password to continue.</p>
+                <div class="login-form">
+                    <input type="password" id="login-password" class="input" placeholder="Enter password" />
+                    <button class="btn" id="login-btn">Login</button>
+                    <p id="login-error" class="login-error"></p>
+                </div>
+                <div class="password-hint">
+                    <p><small>Hint: Your password is set to "silas123" by default. You can change it in the Edit section after logging in.</small></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin/Edit Section -->
+        <section id="admin" class="section">
+            <h2>✏️ Edit Your Content</h2>
+            <div class="admin-header">
+                <button class="btn logout-btn" id="logout-btn">🚪 Logout</button>
+            </div>
+            
+            <!-- Edit Bio -->
+            <div class="admin-panel">
+                <h3>Edit Bio</h3>
+                <textarea id="bio-editor" class="editor" rows="4" placeholder="Write about yourself..."></textarea>
+                <button class="btn" id="save-bio-btn">Save Bio</button>
+            </div>
+
+            <!-- Edit Interests -->
+            <div class="admin-panel">
+                <h3>Edit Interests</h3>
+                <div id="interests-editor" class="interests-editor">
+                    <!-- Interest tags will be loaded here -->
+                </div>
+                <div class="add-interest">
+                    <input type="text" id="new-interest" placeholder="Add new interest..." />
+                    <button class="btn" id="add-interest-btn">Add Interest</button>
+                </div>
+            </div>
+
+            <!-- Add Picture -->
+            <div class="admin-panel">
+                <h3>Add Picture</h3>
+                <input type="text" id="picture-url" class="input" placeholder="Picture URL" />
+                <input type="text" id="picture-caption" class="input" placeholder="Caption" />
+                <button class="btn" id="add-picture-btn">Add Picture</button>
+            </div>
+
+            <!-- Add Story -->
+            <div class="admin-panel">
+                <h3>Add Story</h3>
+                <input type="text" id="story-title" class="input" placeholder="Story Title" />
+                <textarea id="story-content" class="editor" rows="8" placeholder="Write your story..."></textarea>
+                <button class="btn" id="add-story-btn">Add Story</button>
+            </div>
+
+            <!-- Change Password -->
+            <div class="admin-panel">
+                <h3>Change Password</h3>
+                <input type="password" id="current-password" class="input" placeholder="Current Password" />
+                <input type="password" id="new-password" class="input" placeholder="New Password" />
+                <input type="password" id="confirm-password" class="input" placeholder="Confirm New Password" />
+                <button class="btn" id="change-password-btn">Change Password</button>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>© 2025 Silas Anderson | Made with ❤️ and ☕</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
