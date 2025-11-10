@@ -19,6 +19,7 @@ Welcome to Silas's personal website! This is a fun, interactive website for an 1
 ## 🔐 Authentication
 
 The Edit section is protected by a password:
+
 - **Default password**: `silas123`
 - Change it in the Edit section after logging in
 - Session expires when browser is closed
@@ -30,6 +31,7 @@ See [USER_GUIDE.md](USER_GUIDE.md) for complete instructions on how to use all f
 ## 💾 Data Storage
 
 All data is stored in your browser's LocalStorage:
+
 - No server required
 - Data persists between sessions
 - Use the same browser to see your saved content
@@ -44,16 +46,19 @@ All data is stored in your browser's LocalStorage:
 ## 🚀 Deployment
 
 This website is deployed on Cloudflare Pages:
-- **Production URL**: https://silas-anderson.pages.dev
-- **Custom Domain**: https://silasanderson.us (when configured)
+
+- **Production URL**: <https://silas-anderson.pages.dev>
+- **Custom Domain**: <https://silasanderson.us> (when configured)
 
 ### Deploy Updates
+
 To deploy changes to the live site:
+
 ```bash
 wrangler pages deploy . --project-name=silas-anderson
 ```
 
-## 🎮 Have Fun!
+## 🎮 Have Fun
 
 This is YOUR website - make it your own! Add pictures, write stories, and enjoy the adventure game!
 
