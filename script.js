@@ -240,16 +240,23 @@ function setupNavigation() {
     });
 }
 
+// Helper function to escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Home Section
 function loadHome() {
     const bioDisplay = document.getElementById('bio-display');
     const interestsDisplay = document.getElementById('interests-display');
 
-    bioDisplay.innerHTML = `<p>${dataManager.getBio()}</p>`;
+    bioDisplay.innerHTML = `<p>${escapeHtml(dataManager.getBio())}</p>`;
 
     const interests = dataManager.getInterests();
     interestsDisplay.innerHTML = interests.map(interest => 
-        `<div class="interest-tag">${interest}</div>`
+        `<div class="interest-tag">${escapeHtml(interest)}</div>`
     ).join('');
 }
 
@@ -267,8 +274,8 @@ function loadGallery() {
         emptyMessage.style.display = 'none';
         galleryGrid.innerHTML = pictures.map((pic, index) => `
             <div class="gallery-item">
-                <img src="${pic.url}" alt="${pic.caption}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22250%22 height=%22250%22%3E%3Crect width=%22250%22 height=%22250%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3EImage Not Found%3C/text%3E%3C/svg%3E'">
-                <div class="gallery-caption">${pic.caption}</div>
+                <img src="${escapeHtml(pic.url)}" alt="${escapeHtml(pic.caption)}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22250%22 height=%22250%22%3E%3Crect width=%22250%22 height=%22250%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3EImage Not Found%3C/text%3E%3C/svg%3E'">
+                <div class="gallery-caption">${escapeHtml(pic.caption)}</div>
                 <button class="delete-btn" onclick="deletePicture(${index})">×</button>
             </div>
         `).join('');
@@ -297,8 +304,8 @@ function loadStories() {
         emptyMessage.style.display = 'none';
         storiesList.innerHTML = stories.map((story, index) => `
             <div class="story-item">
-                <h3>${story.title}</h3>
-                <p>${story.content}</p>
+                <h3>${escapeHtml(story.title)}</h3>
+                <p>${escapeHtml(story.content)}</p>
                 <button class="delete-btn" onclick="deleteStory(${index})">Delete</button>
             </div>
         `).join('');
@@ -504,7 +511,7 @@ function loadInterestsEditor() {
     
     interestsEditor.innerHTML = interests.map((interest, index) => `
         <div class="interest-tag-editable">
-            <span>${interest}</span>
+            <span>${escapeHtml(interest)}</span>
             <button onclick="removeInterest(${index})">×</button>
         </div>
     `).join('');
