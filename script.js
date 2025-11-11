@@ -401,7 +401,7 @@ function checkAuth() {
     const adminNavLink = document.getElementById('admin-nav-link');
     // Always show the Edit button, but change the text based on auth status
     adminNavLink.style.display = 'block';
-    
+
     if (dataManager.isAuthenticated()) {
         adminNavLink.textContent = '✏️ Edit';
         adminNavLink.setAttribute('data-section', 'admin');
