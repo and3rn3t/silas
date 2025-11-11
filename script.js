@@ -3504,7 +3504,7 @@ function checkSkillUnlocks(state) {
             message += `✨ ${skill.name}\n`;
             message += `   ${skill.description}\n\n`;
         });
-        
+
         // Store message to show after level up notification
         state.newSkillsMessage = message;
     }
@@ -4169,14 +4169,14 @@ document.getElementById('skills-btn').addEventListener('click', () => {
 function showSkillsOutsideBattle() {
     const state = dataManager.getGameState();
     const availableSkills = state.skills?.available || [];
-    
+
     if (availableSkills.length === 0) {
         showMessage('✨ No skills learned yet! Level up and choose a class to learn skills.', 'info');
         return;
     }
-    
+
     let message = '✨ YOUR SKILLS ✨\n\n';
-    
+
     // Show passive skills
     message += '🔮 PASSIVE ABILITIES:\n';
     availableSkills.forEach(skillKey => {
@@ -4185,7 +4185,7 @@ function showSkillsOutsideBattle() {
             message += `• ${skill.name}: ${skill.description}\n`;
         }
     });
-    
+
     message += '\n⚔️ ACTIVE SKILLS:\n';
     availableSkills.forEach(skillKey => {
         const skill = skills[skillKey];
@@ -4196,7 +4196,7 @@ function showSkillsOutsideBattle() {
             message += `  Mana Cost: ${skill.manaCost} | Cooldown: ${skill.cooldown} turns\n`;
         }
     });
-    
+
     // Show passive bonuses
     const bonuses = getPassiveSkillBonuses(state);
     if (Object.values(bonuses).some(val => val > 0)) {
@@ -4209,7 +4209,7 @@ function showSkillsOutsideBattle() {
         if (bonuses.manaCostReduction > 0) message += `• -${bonuses.manaCostReduction}% Mana Costs\n`;
         if (bonuses.dodgeBonus > 0) message += `• +${bonuses.dodgeBonus}% Dodge Chance\n`;
     }
-    
+
     showMessage(message, 'info');
 }
 
