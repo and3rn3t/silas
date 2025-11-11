@@ -1,3 +1,4 @@
+/* eslint-env serviceworker */
 // Service Worker for Silas Anderson's Personal Website
 // Provides offline functionality and caching
 
@@ -145,7 +146,7 @@ self.addEventListener('push', event => {
     );
 });
 
-// Handle notification clicks
+// Notification click handler
 self.addEventListener('notificationclick', event => {
     event.notification.close();
 
@@ -164,7 +165,10 @@ self.addEventListener('notificationclick', event => {
 
 // Message handling from main thread
 self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+    // Verify origin for security
+    if (event.origin !== location.origin) return;
+
+    if (event.data?.type === 'SKIP_WAITING') {
+        globalThis.skipWaiting();
     }
 });

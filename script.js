@@ -81,7 +81,70 @@ class DataManager {
     }
 
     getGameState() {
-        return JSON.parse(localStorage.getItem('silas-game-state'));
+        const savedState = localStorage.getItem('silas-game-state');
+        if (!savedState) {
+            // Return initial state if no saved state exists
+            const initialState = {
+                name: 'Brave Adventurer',
+                level: 1,
+                xp: 0,
+                xpNeeded: 100,
+                hp: 100,
+                maxHp: 100,
+                gold: 0,
+                currentLocation: 'castle',
+                class: 'warrior',
+                attack: 15,
+                defense: 5,
+                critChance: 10,
+                dodgeChance: 5,
+                mana: 50,
+                maxMana: 50,
+                equipment: {
+                    weapon: { name: 'Iron Sword', attack: 10, rarity: 'common' },
+                    armor: { name: 'Leather Armor', defense: 5, rarity: 'common' }
+                },
+                skills: {
+                    available: [],
+                    cooldowns: {},
+                    ultimateReady: true
+                },
+                inventory: [],
+                achievements: [],
+                bossesDefeated: 0,
+                explorationCount: 0,
+                inBattle: false,
+                currentEnemy: null,
+                battleTurn: 'player',
+                activeQuests: [],
+                completedQuests: [],
+                availableQuests: ['royal_duty'],
+                unlockedLocations: ['castle'],
+                dailyQuestProgress: {},
+                lastDailyRefresh: new Date().toDateString(),
+                questStats: {
+                    kills: 0,
+                    resourcesCollected: 0,
+                    locationsExplored: 0,
+                    battlesByLocation: { castle: 0 },
+                    itemsCollected: {},
+                    bossesDefeated: {},
+                    artifactsFound: 0,
+                    daily_kills: 0,
+                    daily_resources: 0,
+                    daily_skills: 0
+                },
+                currentWeather: 'clear',
+                weatherChangeTimer: 0,
+                weatherDuration: 5,
+                pets: [],
+                activePet: null,
+                petEncounters: 0
+            };
+            this.saveGameState(initialState);
+            return initialState;
+        }
+        return JSON.parse(savedState);
     }
 
     saveGameState(state) {
@@ -2201,18 +2264,20 @@ function useCraftedItem(state, itemName) {
     const result = { success: true, message: '' };
 
     switch (item.effect) {
-    case 'heal':
+    case 'heal': {
         const healAmount = Math.min(item.value, state.maxHp - state.hp);
         state.hp += healAmount;
         result.message = `Restored ${healAmount} HP!`;
         break;
+    }
 
-    case 'mana':
+    case 'mana': {
         const manaAmount = Math.min(item.value, state.maxMana - state.mana);
         state.mana += manaAmount;
         state.maxMana += 20; // Temporary bonus
         result.message = `Restored ${manaAmount} mana and increased max mana by 20!`;
         break;
+    }
 
     case 'loyalty':
         if (state.activePet && state.pets) {
@@ -2377,7 +2442,7 @@ function applyEventReward(state, reward) {
         }
         break;
 
-    case 'random_equipment':
+    case 'random_equipment': {
         const rarityItems = equipment.weapons.filter(item => item.rarity === reward.rarity)
             .concat(equipment.armor.filter(item => item.rarity === reward.rarity));
         if (rarityItems.length > 0) {
@@ -2387,6 +2452,7 @@ function applyEventReward(state, reward) {
             rewardMessage = `🎁 The merchant gives you: ${randomItem.name}!`;
         }
         break;
+    }
 
     case 'skill_unlock':
         // Unlock a random skill (implementation depends on skill system)
@@ -2934,9 +3000,8 @@ function explore() {
             message += `🌿 You gathered ${resourceAmount}x ${resourceName}!${weatherNote} ${specialEncounter.description}`;
             dataManager.updateQuestProgress('collect_item', { item: resourceName });
         }
-    }
+    } else if (encounterChance < 0.6) {
     // Regular encounters (50% chance)
-    else if (encounterChance < 0.6) {
         const encounter = selectLocationEncounter(currentLocation, state.level);
 
         message += `A ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
@@ -2947,9 +3012,8 @@ function explore() {
         startBattle(state, encounter);
         dataManager.saveGameState(state);
         return;
-    }
+    } else {
     // Treasure/Resource finding (40% chance)
-    else {
         const treasureType = Math.random();
 
         // Check for pet encounters first (small chance)
