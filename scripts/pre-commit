@@ -1,0 +1,32 @@
+#!/bin/sh
+# Pre-commit hook for Silas Anderson project
+
+echo "🔍 Running pre-commit checks..."
+
+# Run linting
+echo "📝 Checking code style..."
+npm run lint --silent
+if [ $? -ne 0 ]; then
+    echo "❌ Linting failed. Please fix errors before committing."
+    echo "💡 Run 'npm run lint:fix' to auto-fix issues"
+    exit 1
+fi
+
+# Run tests
+echo "🧪 Running unit tests..."
+npm run test --silent
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Please fix tests before committing."
+    exit 1
+fi
+
+# Check formatting
+echo "🎨 Checking code formatting..."
+npm run format:check --silent
+if [ $? -ne 0 ]; then
+    echo "❌ Code formatting issues found. Please run 'npm run format' to fix."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0
