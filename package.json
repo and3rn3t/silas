@@ -30,7 +30,7 @@
   "author": "Silas Anderson",
   "license": "MIT",
   "devDependencies": {
-    "@lhci/cli": "^0.12.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.48.0",
     "@types/jest": "^29.5.12",
     "audit-ci": "^6.6.1",
