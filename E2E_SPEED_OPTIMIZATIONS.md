@@ -4,11 +4,11 @@
 
 ### 🚀 **Speed Gains Achieved**
 
-| Test Type | Before | After | Improvement |
-|-----------|--------|-------|-------------|
+| Test Type          | Before       | After       | Improvement    |
+| ------------------ | ------------ | ----------- | -------------- |
 | **Full E2E Suite** | ~2-3 minutes | ~45 seconds | **75% faster** |
-| **Chromium Only** | ~1 minute | ~30 seconds | **50% faster** |
-| **Smoke Tests** | ~45 seconds | ~20 seconds | **55% faster** |
+| **Chromium Only**  | ~1 minute    | ~30 seconds | **50% faster** |
+| **Smoke Tests**    | ~45 seconds  | ~20 seconds | **55% faster** |
 
 ## Configuration Changes
 
@@ -16,7 +16,7 @@
 
 ```javascript
 // playwright.config.js
-workers: process.env.CI ? '50%' : '75%'  // Use more workers locally
+workers: process.env.CI ? '50%' : '75%'; // Use more workers locally
 ```
 
 **Impact:** Runs 75% of CPU cores in parallel for local tests vs 50% on CI
@@ -24,10 +24,11 @@ workers: process.env.CI ? '50%' : '75%'  // Use more workers locally
 ### 2. **Faster Reporter for Local Development**
 
 ```javascript
-reporter: process.env.CI ? 'html' : 'line'  // Line reporter is faster
+reporter: process.env.CI ? 'html' : 'line'; // Line reporter is faster
 ```
 
-**Impact:** Instant console feedback instead of waiting for HTML report generation
+**Impact:** Instant console feedback instead of waiting for HTML report
+generation
 
 ### 3. **Reduced Timeouts**
 
@@ -53,7 +54,7 @@ webServer: {
 ### 5. **Server Reuse**
 
 ```javascript
-reuseExistingServer: !process.env.CI  // Keep server running between test runs
+reuseExistingServer: !process.env.CI; // Keep server running between test runs
 ```
 
 **Impact:** No server restart needed for consecutive test runs
@@ -66,7 +67,7 @@ reuseExistingServer: !process.env.CI  // Keep server running between test runs
 # Fastest - Chromium only (30-40 seconds)
 npm run test:e2e:fast
 
-# Quick with 4 parallel workers (35-45 seconds)  
+# Quick with 4 parallel workers (35-45 seconds)
 npm run test:e2e:quick
 
 # Smoke tests only - navigation checks (15-25 seconds)
@@ -82,25 +83,25 @@ npm run test:e2e:ui
 ### 📊 **Recommended Workflow**
 
 1. **During Development**: `npm run test:e2e:fast`
-   - Single browser (Chromium)
-   - Parallel execution
-   - Line reporter for instant feedback
-   - ~30-40 seconds total
+    - Single browser (Chromium)
+    - Parallel execution
+    - Line reporter for instant feedback
+    - ~30-40 seconds total
 
 2. **Pre-Commit**: `npm run test:e2e:smoke`
-   - Navigation tests only
-   - Catches most UI breaking changes
-   - ~15-25 seconds total
+    - Navigation tests only
+    - Catches most UI breaking changes
+    - ~15-25 seconds total
 
 3. **Pre-Push**: `npm run test:e2e`
-   - Full browser matrix
-   - All test scenarios
-   - ~2 minutes total
+    - Full browser matrix
+    - All test scenarios
+    - ~2 minutes total
 
 4. **Debugging**: `npm run test:e2e:ui`
-   - Interactive UI with time travel
-   - Visual debugging
-   - On-demand execution
+    - Interactive UI with time travel
+    - Visual debugging
+    - On-demand execution
 
 ## Technical Optimizations
 
@@ -163,15 +164,15 @@ Running 30 tests using 6 workers
 
 ## CI vs Local Comparison
 
-| Feature | Local Development | CI Environment |
-|---------|------------------|----------------|
-| **Workers** | 75% CPU cores | 50% CPU cores |
-| **Timeouts** | 5s (fast fail) | 15s (stable) |
-| **Reporter** | Line (instant) | HTML (detailed) |
-| **Server Reuse** | Yes | No |
-| **Video Recording** | Off | On failure |
-| **Retries** | 0 (fail fast) | 2 (stability) |
-| **Total Time** | 30-45s | 1-2 minutes |
+| Feature             | Local Development | CI Environment  |
+| ------------------- | ----------------- | --------------- |
+| **Workers**         | 75% CPU cores     | 50% CPU cores   |
+| **Timeouts**        | 5s (fast fail)    | 15s (stable)    |
+| **Reporter**        | Line (instant)    | HTML (detailed) |
+| **Server Reuse**    | Yes               | No              |
+| **Video Recording** | Off               | On failure      |
+| **Retries**         | 0 (fail fast)     | 2 (stability)   |
+| **Total Time**      | 30-45s            | 1-2 minutes     |
 
 ## Troubleshooting
 
@@ -190,7 +191,8 @@ Running 30 tests using 6 workers
 
 ### Tests Still Failing?
 
-- **Some test failures are expected** - we optimized for speed, not fixing broken tests
+- **Some test failures are expected** - we optimized for speed, not fixing
+  broken tests
 - Use `npm run test:e2e:ui` to debug specific failures interactively
 - Check test logs in `test-results/` directory
 
@@ -204,4 +206,5 @@ With these optimizations, you can now:
 - 🐛 **Debug efficiently** with interactive UI mode
 - ✅ **Maintain quality** with full suite before pushing
 
-The key insight: **not every test run needs every browser**. Use the right tool for the right job!
+The key insight: **not every test run needs every browser**. Use the right tool
+for the right job!
