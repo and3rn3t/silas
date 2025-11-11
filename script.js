@@ -174,6 +174,10 @@ class DataManager {
         const gameState = this.getGameState();
         const availableQuests = [];
 
+        // Ensure quest arrays are initialized
+        if (!gameState.activeQuests) gameState.activeQuests = [];
+        if (!gameState.completedQuests) gameState.completedQuests = [];
+
         for (const questId in quests) {
             const quest = quests[questId];
             const isActive = gameState.activeQuests.includes(questId);
@@ -301,6 +305,7 @@ class DataManager {
             gameState.gold += quest.rewards.gold;
         }
         if (quest.rewards.item) {
+            gameState.inventory = gameState.inventory || [];
             gameState.inventory.push({
                 name: quest.rewards.item,
                 type: 'quest_reward',
@@ -398,17 +403,46 @@ const dataManager = new DataManager();
 
 // Authentication
 function checkAuth() {
-    const adminNavLink = document.getElementById('admin-nav-link');
+    let adminNavLink = document.getElementById('admin-nav-link');
+    
+    if (!adminNavLink) {
+        console.warn('Admin nav link not found! Creating it...');
+        
+        // Create the navigation link if it doesn't exist
+        const navLinks = document.querySelector('.nav-links');
+        if (navLinks) {
+            const listItem = document.createElement('li');
+            adminNavLink = document.createElement('a');
+            adminNavLink.href = '#admin';
+            adminNavLink.className = 'nav-link';
+            adminNavLink.id = 'admin-nav-link';
+            adminNavLink.setAttribute('data-section', 'admin');
+            
+            listItem.appendChild(adminNavLink);
+            navLinks.appendChild(listItem);
+            console.log('Created admin nav link');
+        } else {
+            console.error('Navigation container not found!');
+            return;
+        }
+    }
+    
     // Always show the Edit button, but change the text based on auth status
     adminNavLink.style.display = 'block';
+    adminNavLink.style.backgroundColor = 'red'; // Make it very obvious
+    adminNavLink.style.color = 'white';
 
     if (dataManager.isAuthenticated()) {
         adminNavLink.textContent = '✏️ Edit';
         adminNavLink.setAttribute('data-section', 'admin');
+        console.log('User is authenticated - showing Edit button');
     } else {
         adminNavLink.textContent = '🔐 Login';
         adminNavLink.setAttribute('data-section', 'login');
+        console.log('User not authenticated - showing Login button');
     }
+    
+    console.log('CheckAuth completed - button text:', adminNavLink.textContent);
 }
 
 function login() {
@@ -2465,6 +2499,12 @@ function updateLocationSelector() {
 
     if (!locationGrid) return;
 
+    // Ensure unlockedLocations is initialized
+    if (!state.unlockedLocations) {
+        state.unlockedLocations = ['castle'];
+        dataManager.saveGameState(state);
+    }
+
     locationGrid.innerHTML = '';
 
     for (const locationId in gameScenarios) {
@@ -4493,7 +4533,12 @@ function setupPerformanceMonitoring() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
-    checkAuth();
+    
+    // Add a small delay to ensure DOM is fully ready
+    setTimeout(() => {
+        checkAuth();
+    }, 100);
+    
     loadHome();
     loadGallery();
     loadStories();
@@ -4507,6 +4552,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPWAInstall();
     setupTouchGestures();
     setupMobileOptimizations();
+    
+    // Ensure auth check runs after everything is loaded
+    setTimeout(() => {
+        checkAuth();
+        
+        // Emergency fallback - force create login button
+        const testElement = document.createElement('div');
+        testElement.style.position = 'fixed';
+        testElement.style.top = '10px';
+        testElement.style.right = '10px';
+        testElement.style.backgroundColor = 'blue';
+        testElement.style.color = 'white';
+        testElement.style.padding = '10px';
+        testElement.style.zIndex = '9999';
+        testElement.textContent = 'LOGIN BUTTON TEST';
+        testElement.onclick = () => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => s.classList.remove('active'));
+            document.getElementById('login').classList.add('active');
+        };
+        document.body.appendChild(testElement);
+        
+        console.log('Emergency login button created');
+    }, 500);
     setupOfflineHandling();
     setupPerformanceMonitoring();
 });
