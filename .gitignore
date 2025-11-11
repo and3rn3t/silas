@@ -176,8 +176,8 @@ pids
 build/
 dist/
 
-# Package managers
-package-lock.json
+# Package managers (keep lock files for CI/CD consistency)
+# package-lock.json  # Should be committed for CI/CD
 yarn.lock
 pnpm-lock.yaml
 
