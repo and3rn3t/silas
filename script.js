@@ -404,10 +404,10 @@ const dataManager = new DataManager();
 // Authentication
 function checkAuth() {
     let adminNavLink = document.getElementById('admin-nav-link');
-    
+
     if (!adminNavLink) {
         console.warn('Admin nav link not found! Creating it...');
-        
+
         // Create the navigation link if it doesn't exist
         const navLinks = document.querySelector('.nav-links');
         if (navLinks) {
@@ -417,7 +417,7 @@ function checkAuth() {
             adminNavLink.className = 'nav-link';
             adminNavLink.id = 'admin-nav-link';
             adminNavLink.setAttribute('data-section', 'admin');
-            
+
             listItem.appendChild(adminNavLink);
             navLinks.appendChild(listItem);
             console.log('Created admin nav link');
@@ -426,7 +426,7 @@ function checkAuth() {
             return;
         }
     }
-    
+
     // Always show the Edit button, but change the text based on auth status
     adminNavLink.style.display = 'block';
     adminNavLink.style.backgroundColor = 'red'; // Make it very obvious
@@ -441,7 +441,7 @@ function checkAuth() {
         adminNavLink.setAttribute('data-section', 'login');
         console.log('User not authenticated - showing Login button');
     }
-    
+
     console.log('CheckAuth completed - button text:', adminNavLink.textContent);
 }
 
@@ -4533,12 +4533,12 @@ function setupPerformanceMonitoring() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
-    
+
     // Add a small delay to ensure DOM is fully ready
     setTimeout(() => {
         checkAuth();
     }, 100);
-    
+
     loadHome();
     loadGallery();
     loadStories();
@@ -4552,11 +4552,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPWAInstall();
     setupTouchGestures();
     setupMobileOptimizations();
-    
+
     // Ensure auth check runs after everything is loaded
     setTimeout(() => {
         checkAuth();
-        
+
         // Emergency fallback - force create login button
         const testElement = document.createElement('div');
         testElement.style.position = 'fixed';
@@ -4573,7 +4573,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('login').classList.add('active');
         };
         document.body.appendChild(testElement);
-        
+
         console.log('Emergency login button created');
     }, 500);
     setupOfflineHandling();
