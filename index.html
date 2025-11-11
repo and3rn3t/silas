@@ -58,6 +58,7 @@
                 <li><a href="#gallery" class="nav-link" data-section="gallery">Gallery</a></li>
                 <li><a href="#stories" class="nav-link" data-section="stories">Stories</a></li>
                 <li><a href="#game" class="nav-link" data-section="game">Adventure Game</a></li>
+                <li><a href="#codex" class="nav-link" data-section="codex">Lore Codex</a></li>
                 <li><a href="#admin" class="nav-link" data-section="admin" id="admin-nav-link">✏️ Edit</a></li>
             </ul>
         </nav>
@@ -345,6 +346,29 @@
             <div id="game-loading" class="game-loading">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">Processing...</div>
+            </div>
+        </section>
+
+        <!-- Lore Codex Section -->
+        <section id="codex" class="section">
+            <h2>📚 Lore Codex</h2>
+            <p class="codex-description">Branching stories and battles fill this codex with lore, creatures, and memorable moments.</p>
+            <div class="codex-grid">
+                <div class="codex-panel">
+                    <h3>Story Lore</h3>
+                    <div id="codex-lore-list" class="codex-list"></div>
+                    <p id="codex-lore-empty" class="empty-message">Explore story paths to unlock lore entries.</p>
+                </div>
+                <div class="codex-panel">
+                    <h3>Bestiary</h3>
+                    <div id="codex-bestiary-list" class="codex-list bestiary"></div>
+                    <p id="codex-bestiary-empty" class="empty-message">Battle creatures to fill out your bestiary.</p>
+                </div>
+            </div>
+            <div class="codex-panel codex-log-panel">
+                <h3>Adventure Log</h3>
+                <div id="codex-log-list" class="codex-log"></div>
+                <p id="codex-log-empty" class="empty-message">Your adventure log is empty. Explore to record new entries.</p>
             </div>
         </section>
 

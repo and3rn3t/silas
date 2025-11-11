@@ -671,11 +671,126 @@ body {
 @keyframes pulse {
   0%,
   100% {
+    transform: scale(1);
     opacity: 1;
   }
+
   50% {
-    opacity: 0.5;
+    transform: scale(0.94);
+    opacity: 0.6;
   }
+}
+
+/* Codex Section */
+.codex-description {
+  margin: var(--space-4) 0 var(--space-6);
+  color: var(--color-neutral-600);
+  max-width: 60ch;
+  font-size: var(--font-size-base);
+}
+
+.codex-grid {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: var(--space-6);
+}
+
+.codex-panel {
+  background: linear-gradient(145deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.85));
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 18px;
+  padding: var(--space-5);
+  box-shadow: 0 18px 36px -24px rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.codex-panel h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-3);
+  color: var(--color-neutral-700);
+}
+
+.codex-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.codex-list.bestiary {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.codex-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: var(--space-4);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 14px 32px -24px rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.codex-card h4 {
+  font-size: var(--font-size-md);
+  color: var(--color-neutral-800);
+}
+
+.codex-card p {
+  margin: 0;
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-base);
+}
+
+.codex-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.codex-log-panel {
+  margin-top: var(--space-6);
+}
+
+.codex-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.codex-log-entry {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: var(--space-4);
+  box-shadow: 0 12px 24px -20px rgba(15, 23, 42, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.codex-log-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+}
+
+.bestiary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.bestiary-icon {
+  font-size: 2.25rem;
+  filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.25));
+}
+
+.codex-card.bestiary p {
+  color: var(--color-neutral-600);
 }
 
 /* Touch device specific styles */

@@ -1,158 +1,109 @@
 // Data Storage using LocalStorage
 class DataManager {
     constructor() {
+        this._cache = {
+            bio: null,
+            interests: [],
+            pictures: [],
+            stories: [],
+            gameState: null,
+            password: null
+        };
         this.initializeData();
     }
 
     initializeData() {
-        if (!localStorage.getItem('silas-bio')) {
-            localStorage.setItem(
-                'silas-bio',
-                'Hi! I\'m Silas Anderson, and I love exploring new worlds through anime and games!'
-            );
+        const defaultBio = "Hi! I'm Silas Anderson, and I love exploring new worlds through anime and games!";
+        const defaultInterests = ['🎌 Anime', '🐱 Cats', '🗺️ Adventure Games', '👊 Fighting Games'];
+
+        const storedBio = localStorage.getItem('silas-bio');
+        this._cache.bio = storedBio ?? defaultBio;
+        if (storedBio === null) {
+            localStorage.setItem('silas-bio', this._cache.bio);
         }
-        if (!localStorage.getItem('silas-interests')) {
-            localStorage.setItem(
-                'silas-interests',
-                JSON.stringify(['🎌 Anime', '🐱 Cats', '🗺️ Adventure Games', '👊 Fighting Games'])
-            );
+
+        const storedInterests = this._readJson('silas-interests');
+        this._cache.interests = Array.isArray(storedInterests) ? storedInterests : [...defaultInterests];
+        if (!Array.isArray(storedInterests)) {
+            this._writeJson('silas-interests', this._cache.interests);
         }
-        if (!localStorage.getItem('silas-pictures')) {
-            localStorage.setItem('silas-pictures', JSON.stringify([]));
+
+        const storedPictures = this._readJson('silas-pictures');
+        this._cache.pictures = Array.isArray(storedPictures) ? storedPictures : [];
+        if (!Array.isArray(storedPictures)) {
+            this._writeJson('silas-pictures', this._cache.pictures);
         }
-        if (!localStorage.getItem('silas-stories')) {
-            localStorage.setItem('silas-stories', JSON.stringify([]));
+
+        const storedStories = this._readJson('silas-stories');
+        this._cache.stories = Array.isArray(storedStories) ? storedStories : [];
+        if (!Array.isArray(storedStories)) {
+            this._writeJson('silas-stories', this._cache.stories);
         }
-        if (!localStorage.getItem('silas-game-state')) {
-            this.resetGame();
+
+        const storedGameState = this._readJson('silas-game-state');
+        if (storedGameState) {
+            const { state: migratedState, changed } = this._ensureGameStateStructure(storedGameState);
+            this._cache.gameState = this._clone(migratedState);
+            if (changed) {
+                this._writeJson('silas-game-state', migratedState);
+            }
+        } else {
+            const initialState = this._createInitialGameState();
+            this._cache.gameState = this._clone(initialState);
+            this._writeJson('silas-game-state', initialState);
         }
-        if (!localStorage.getItem('silas-password')) {
-            // Default password: silas123
-            localStorage.setItem('silas-password', 'silas123');
+
+        const storedPassword = localStorage.getItem('silas-password');
+        if (storedPassword) {
+            this._cache.password = storedPassword;
+        } else {
+            this._cache.password = 'silas123';
+            localStorage.setItem('silas-password', this._cache.password);
         }
     }
 
-    getBio() {
-        return localStorage.getItem('silas-bio');
-    }
-
-    setBio(bio) {
-        localStorage.setItem('silas-bio', bio);
-    }
-
-    getInterests() {
-        return JSON.parse(localStorage.getItem('silas-interests'));
-    }
-
-    setInterests(interests) {
-        localStorage.setItem('silas-interests', JSON.stringify(interests));
-    }
-
-    getPictures() {
-        return JSON.parse(localStorage.getItem('silas-pictures'));
-    }
-
-    addPicture(picture) {
-        const pictures = this.getPictures();
-        pictures.push(picture);
-        localStorage.setItem('silas-pictures', JSON.stringify(pictures));
-    }
-
-    deletePicture(index) {
-        const pictures = this.getPictures();
-        pictures.splice(index, 1);
-        localStorage.setItem('silas-pictures', JSON.stringify(pictures));
-    }
-
-    getStories() {
-        return JSON.parse(localStorage.getItem('silas-stories'));
-    }
-
-    addStory(story) {
-        const stories = this.getStories();
-        stories.push(story);
-        localStorage.setItem('silas-stories', JSON.stringify(stories));
-    }
-
-    deleteStory(index) {
-        const stories = this.getStories();
-        stories.splice(index, 1);
-        localStorage.setItem('silas-stories', JSON.stringify(stories));
-    }
-
-    getGameState() {
-        const savedState = localStorage.getItem('silas-game-state');
-        if (!savedState) {
-            // Return initial state if no saved state exists
-            const initialState = {
-                name: 'Brave Adventurer',
-                level: 1,
-                xp: 0,
-                xpNeeded: 100,
-                hp: 100,
-                maxHp: 100,
-                gold: 0,
-                currentLocation: 'castle',
-                class: 'warrior',
-                attack: 15,
-                defense: 5,
-                critChance: 10,
-                dodgeChance: 5,
-                mana: 50,
-                maxMana: 50,
-                equipment: {
-                    weapon: { name: 'Iron Sword', attack: 10, rarity: 'common' },
-                    armor: { name: 'Leather Armor', defense: 5, rarity: 'common' }
-                },
-                skills: {
-                    available: [],
-                    cooldowns: {},
-                    ultimateReady: true
-                },
-                inventory: [],
-                achievements: [],
-                bossesDefeated: 0,
-                explorationCount: 0,
-                inBattle: false,
-                currentEnemy: null,
-                battleTurn: 'player',
-                activeQuests: [],
-                completedQuests: [],
-                availableQuests: ['royal_duty'],
-                unlockedLocations: ['castle'],
-                dailyQuestProgress: {},
-                lastDailyRefresh: new Date().toDateString(),
-                questStats: {
-                    kills: 0,
-                    resourcesCollected: 0,
-                    locationsExplored: 0,
-                    battlesByLocation: { castle: 0 },
-                    itemsCollected: {},
-                    bossesDefeated: {},
-                    artifactsFound: 0,
-                    daily_kills: 0,
-                    daily_resources: 0,
-                    daily_skills: 0
-                },
-                currentWeather: 'clear',
-                weatherChangeTimer: 0,
-                weatherDuration: 5,
-                pets: [],
-                activePet: null,
-                petEncounters: 0
-            };
-            this.saveGameState(initialState);
-            return initialState;
+    _readJson(key) {
+        const raw = localStorage.getItem(key);
+        if (!raw) {
+            return null;
         }
-        return JSON.parse(savedState);
+
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            console.warn(`Failed to parse localStorage key ${key}`, error);
+            return null;
+        }
     }
 
-    saveGameState(state) {
-        localStorage.setItem('silas-game-state', JSON.stringify(state));
+    _writeJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
     }
 
-    resetGame() {
-        const initialState = {
+    _clone(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+    }
+
+    _createInitialStoryState() {
+        return {
+            activeChain: null,
+            currentStepId: null,
+            completedChains: [],
+            flags: {},
+            history: []
+        };
+    }
+
+    _createInitialCodex() {
+        return {
+            loreEntries: [],
+            bestiary: [],
+            encounterLog: []
+        };
+    }
+
+    _createInitialGameState() {
+        return {
             name: 'Brave Adventurer',
             level: 1,
             xp: 0,
@@ -161,7 +112,7 @@ class DataManager {
             maxHp: 100,
             gold: 0,
             currentLocation: 'castle',
-            class: 'warrior', // Set during character creation
+            class: 'warrior',
             attack: 15,
             defense: 5,
             critChance: 10,
@@ -173,8 +124,8 @@ class DataManager {
                 armor: { name: 'Leather Armor', defense: 5, rarity: 'common' }
             },
             skills: {
-                available: [], // Unlocked skills
-                cooldowns: {}, // Skill cooldowns
+                available: [],
+                cooldowns: {},
                 ultimateReady: true
             },
             inventory: [],
@@ -184,10 +135,9 @@ class DataManager {
             inBattle: false,
             currentEnemy: null,
             battleTurn: 'player',
-            // Quest System Data
             activeQuests: [],
             completedQuests: [],
-            availableQuests: ['royal_duty'], // Starting quests available
+            availableQuests: ['royal_duty'],
             unlockedLocations: ['castle'],
             dailyQuestProgress: {},
             lastDailyRefresh: new Date().toDateString(),
@@ -203,24 +153,148 @@ class DataManager {
                 daily_resources: 0,
                 daily_skills: 0
             },
-            // Weather System
             currentWeather: 'clear',
             weatherChangeTimer: 0,
-            weatherDuration: 5, // Weather changes every 5 explorations
-
-            // Pet System
-            pets: [], // Array of owned pets
-            activePet: null, // Currently active pet (only one at a time)
-            petEncounters: 0 // Track encounters for pet finding
+            weatherDuration: 5,
+            pets: [],
+            activePet: null,
+            petEncounters: 0,
+            storyState: this._createInitialStoryState(),
+            codex: this._createInitialCodex()
         };
+    }
+
+    _ensureGameStateStructure(state) {
+        const updated = { ...state };
+        let changed = false;
+
+        if (!updated.storyState || typeof updated.storyState !== 'object') {
+            updated.storyState = this._createInitialStoryState();
+            changed = true;
+        } else {
+            const storyState = updated.storyState;
+            if (!Array.isArray(storyState.completedChains)) {
+                storyState.completedChains = [];
+                changed = true;
+            }
+            if (!storyState.flags || typeof storyState.flags !== 'object') {
+                storyState.flags = {};
+                changed = true;
+            }
+            if (!Array.isArray(storyState.history)) {
+                storyState.history = [];
+                changed = true;
+            }
+            if (!('activeChain' in storyState)) {
+                storyState.activeChain = null;
+                changed = true;
+            }
+            if (!('currentStepId' in storyState)) {
+                storyState.currentStepId = null;
+                changed = true;
+            }
+        }
+
+        if (!updated.codex || typeof updated.codex !== 'object') {
+            updated.codex = this._createInitialCodex();
+            changed = true;
+        } else {
+            const codex = updated.codex;
+            if (!Array.isArray(codex.loreEntries)) {
+                codex.loreEntries = [];
+                changed = true;
+            }
+            if (!Array.isArray(codex.bestiary)) {
+                codex.bestiary = [];
+                changed = true;
+            }
+            if (!Array.isArray(codex.encounterLog)) {
+                codex.encounterLog = [];
+                changed = true;
+            }
+        }
+
+        return { state: updated, changed };
+    }
+
+    getBio() {
+        return this._cache.bio;
+    }
+
+    setBio(bio) {
+        this._cache.bio = bio;
+        localStorage.setItem('silas-bio', bio);
+    }
+
+    getInterests() {
+        return this._clone(this._cache.interests);
+    }
+
+    setInterests(interests) {
+        this._cache.interests = this._clone(interests);
+        this._writeJson('silas-interests', this._cache.interests);
+    }
+
+    getPictures() {
+        return this._clone(this._cache.pictures);
+    }
+
+    addPicture(picture) {
+        this._cache.pictures.push(picture);
+        this._writeJson('silas-pictures', this._cache.pictures);
+    }
+
+    deletePicture(index) {
+        if (index < 0 || index >= this._cache.pictures.length) {
+            return;
+        }
+        this._cache.pictures.splice(index, 1);
+        this._writeJson('silas-pictures', this._cache.pictures);
+    }
+
+    getStories() {
+        return this._clone(this._cache.stories);
+    }
+
+    addStory(story) {
+        this._cache.stories.push(story);
+        this._writeJson('silas-stories', this._cache.stories);
+    }
+
+    deleteStory(index) {
+        if (index < 0 || index >= this._cache.stories.length) {
+            return;
+        }
+        this._cache.stories.splice(index, 1);
+        this._writeJson('silas-stories', this._cache.stories);
+    }
+
+    getGameState() {
+        const { state: ensuredState, changed } = this._ensureGameStateStructure(this._cache.gameState || {});
+        if (changed) {
+            this._cache.gameState = this._clone(ensuredState);
+            this._writeJson('silas-game-state', ensuredState);
+        }
+        return this._clone(this._cache.gameState);
+    }
+
+    saveGameState(state) {
+        const { state: ensuredState } = this._ensureGameStateStructure(state);
+        this._cache.gameState = this._clone(ensuredState);
+        this._writeJson('silas-game-state', this._cache.gameState);
+    }
+
+    resetGame() {
+        const initialState = this._createInitialGameState();
         this.saveGameState(initialState);
     }
 
     getPassword() {
-        return localStorage.getItem('silas-password');
+        return this._cache.password;
     }
 
     setPassword(password) {
+        this._cache.password = password;
         localStorage.setItem('silas-password', password);
     }
 
@@ -461,51 +535,84 @@ class DataManager {
     }
 }
 
+const GALLERY_FALLBACK_SRC =
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250"><rect width="400" height="250" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="18" fill="%239ca3af">Image unavailable</text></svg>';
+
 // Initialize Data Manager
 const dataManager = new DataManager();
+
+const sectionLoaders = {
+    home: () => {
+        loadHome();
+        return true;
+    },
+    gallery: () => {
+        loadGallery();
+        return true;
+    },
+    stories: () => {
+        loadStories();
+        return true;
+    },
+    codex: () => {
+        loadCodex();
+        return true;
+    },
+    game: () => {
+        loadGame();
+        return true;
+    },
+    admin: () => {
+        if (!dataManager.isAuthenticated()) {
+            return false;
+        }
+        loadAdmin();
+        return true;
+    }
+};
+
+const loadedSections = new Set();
+
+function ensureSectionLoaded(sectionId) {
+    if (loadedSections.has(sectionId)) {
+        return;
+    }
+
+    const loader = sectionLoaders[sectionId];
+    if (typeof loader === 'function' && loader() !== false) {
+        loadedSections.add(sectionId);
+    }
+}
 
 // Authentication
 function checkAuth() {
     let adminNavLink = document.getElementById('admin-nav-link');
 
     if (!adminNavLink) {
-        console.warn('Admin nav link not found! Creating it...');
-
-        // Create the navigation link if it doesn't exist
         const navLinks = document.querySelector('.nav-links');
-        if (navLinks) {
-            const listItem = document.createElement('li');
-            adminNavLink = document.createElement('a');
-            adminNavLink.href = '#admin';
-            adminNavLink.className = 'nav-link';
-            adminNavLink.id = 'admin-nav-link';
-            adminNavLink.setAttribute('data-section', 'admin');
-
-            listItem.appendChild(adminNavLink);
-            navLinks.appendChild(listItem);
-            console.log('Created admin nav link');
-        } else {
-            console.error('Navigation container not found!');
+        if (!navLinks) {
             return;
         }
-    }
 
-    // Always show the Edit button, but change the text based on auth status
-    adminNavLink.style.display = 'block';
-    adminNavLink.style.backgroundColor = 'red'; // Make it very obvious
-    adminNavLink.style.color = 'white';
+        const listItem = document.createElement('li');
+        adminNavLink = document.createElement('a');
+        adminNavLink.href = '#admin';
+        adminNavLink.className = 'nav-link';
+        adminNavLink.id = 'admin-nav-link';
+        adminNavLink.setAttribute('data-section', 'login');
+        adminNavLink.textContent = '🔐 Login';
+
+        listItem.appendChild(adminNavLink);
+        navLinks.appendChild(listItem);
+    }
 
     if (dataManager.isAuthenticated()) {
         adminNavLink.textContent = '✏️ Edit';
         adminNavLink.setAttribute('data-section', 'admin');
-        console.log('User is authenticated - showing Edit button');
     } else {
         adminNavLink.textContent = '🔐 Login';
         adminNavLink.setAttribute('data-section', 'login');
-        console.log('User not authenticated - showing Login button');
     }
-
-    console.log('CheckAuth completed - button text:', adminNavLink.textContent);
 }
 
 function login() {
@@ -603,6 +710,7 @@ function setupNavigation() {
                 // Show login section instead
                 navLinks.forEach(l => l.classList.remove('active'));
                 sections.forEach(s => s.classList.remove('active'));
+                ensureSectionLoaded('login');
                 document.getElementById('login').classList.add('active');
                 return;
             }
@@ -613,6 +721,7 @@ function setupNavigation() {
 
             // Show selected section
             sections.forEach(s => s.classList.remove('active'));
+            ensureSectionLoaded(sectionId);
             document.getElementById(sectionId).classList.add('active');
         });
     });
@@ -623,6 +732,720 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function isSafeImageUrl(url) {
+    if (typeof url !== 'string' || !url.trim()) {
+        return false;
+    }
+
+    try {
+        const parsed = new URL(url, globalThis.location?.origin || globalThis.location.href);
+        return ['http:', 'https:', 'data:'].includes(parsed.protocol);
+    } catch (error) {
+        console.warn('Invalid image URL provided, falling back to placeholder.', error);
+        return false;
+    }
+}
+
+const CODEX_MAX_LOG_ENTRIES = 60;
+
+const loreLibrary = {
+    forest_spirit: {
+        id: 'forest_spirit',
+        title: 'Guardian of the Glade',
+        summary: 'A gentle spirit that watches over the enchanted forest and aids respectful adventurers.',
+        category: 'Allies'
+    },
+    whispering_winds: {
+        id: 'whispering_winds',
+        title: 'Whispering Winds',
+        summary: 'Mysterious voices that guide worthy heroes toward hidden truths within the forest canopy.',
+        category: 'Mysteries'
+    },
+    ancient_guardian: {
+        id: 'ancient_guardian',
+        title: 'Ancient Forest Guardian',
+        summary: 'A colossal protector slumbering beneath the roots, said to awaken only when the forest is in danger.',
+        category: 'Legends'
+    },
+    forest_whispers_story: {
+        id: 'forest_whispers_story',
+        title: 'Whispers in the Woods',
+        summary: 'You followed the forest whispers and gained the trust of the guardian spirit.',
+        category: 'Chronicles'
+    },
+    castle_squire: {
+        id: 'castle_squire',
+        title: 'Loyal Castle Squire',
+        summary: 'A nervous castle squire seeking brave help to deliver a message through the bustling halls.',
+        category: 'Allies'
+    },
+    castle_secret: {
+        id: 'castle_secret',
+        title: 'Royal Rumors',
+        summary: 'Rumblings of a hidden vault beneath the castle, whispered among the palace staff.',
+        category: 'Mysteries'
+    },
+    castle_intrigue_story: {
+        id: 'castle_intrigue_story',
+        title: 'Castle Intrigue',
+    summary: 'You navigated noble politics and secured the castle squire\'s trust.',
+        category: 'Chronicles'
+    }
+};
+
+const storyChains = {
+    forest_whispers: {
+        id: 'forest_whispers',
+        title: 'Whispers in the Woods',
+        triggerLocation: 'forest',
+        minLevel: 2,
+        image: '🌿',
+        steps: [
+            {
+                id: 'intro',
+                prompt:
+                    'Soft whispers curl around you in the Enchanted Forest. They beckon you toward a hidden glade glowing with emerald light.',
+                image: '✨',
+                choices: [
+                    {
+                        id: 'follow',
+                        label: 'Follow the whispers',
+                        outcome: {
+                            message:
+                                'You slip between ancient roots, letting the whispers guide you into a luminescent clearing guarded by a patient spirit.',
+                            xp: 35,
+                            addLore: ['whispering_winds'],
+                            flags: { followedForestWhispers: true },
+                            nextStepId: 'spirit_grove',
+                            log: 'You trusted the forest whispers and discovered a hidden spirit grove.'
+                        }
+                    },
+                    {
+                        id: 'ignore',
+                        label: 'Stay on the main path',
+                        outcome: {
+                            message:
+                                'You keep your footing on the familiar path. The whispers fade with a sigh, leaving only rustling leaves behind.',
+                            xp: 15,
+                            flags: { ignoredForestWhispers: true },
+                            complete: true,
+                            log: 'You ignored the whispers, promising yourself to listen more closely next time.'
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'spirit_grove',
+                prompt:
+                    'A luminous forest spirit rises from the mossy ground. "Few hear our songs. Will you carry our secret?"',
+                image: '🌌',
+                choices: [
+                    {
+                        id: 'accept',
+                        label: 'Accept the spirit\'s request',
+                        outcome: {
+                            message:
+                                'You bow respectfully. The spirit gifts you a charm that hums with gentle power.',
+                            xp: 85,
+                            gold: 40,
+                            rewardItem: {
+                                id: 'spirit_touched_charm',
+                                name: 'Spirit-Touched Charm',
+                                type: 'trinket',
+                                rarity: 'rare',
+                                description: 'Glows softly, reminding you of the guardian watching over the forest.'
+                            },
+                            addLore: ['forest_spirit'],
+                            flags: { forestSpiritAlly: true },
+                            complete: true,
+                            log: 'The forest spirit entrusted you with a Spirit-Touched Charm as a sign of friendship.'
+                        }
+                    },
+                    {
+                        id: 'ask',
+                        label: 'Ask about the whispers',
+                        outcome: {
+                            message:
+                                'You ask about the whispers\' origin. The spirit speaks of an ancient guardian stirring beneath the roots.',
+                            xp: 45,
+                            addLore: ['ancient_guardian'],
+                            flags: { guardianForewarned: true },
+                            nextStepId: 'ancient_guardian',
+                            log: 'You learned that an ancient guardian stirs beneath the forest floor.'
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'ancient_guardian',
+                prompt:
+                    '"The guardian wakes slowly," the spirit warns. "Will you prepare the realm or let the forest defend itself?"',
+                image: '🌳',
+                choices: [
+                    {
+                        id: 'prepare',
+                        label: 'Prepare to aid the guardian',
+                        outcome: {
+                            message:
+                                'You vow to rally allies when the guardian wakes. The spirit marks your hand with a sigil of trust.',
+                            xp: 110,
+                            gold: 60,
+                            grantQuest: 'forest_guardian',
+                            flags: { guardianPrepPledge: true },
+                            complete: true,
+                            log: 'You promised to help the ancient guardian and unlocked a new quest.'
+                        }
+                    },
+                    {
+                        id: 'observe',
+                        label: 'Let the forest handle its own',
+                        outcome: {
+                            message:
+                                'You thank the spirit and agree to watch from afar, trusting the forest to reveal more when ready.',
+                            xp: 60,
+                            addLore: ['forest_whispers_story'],
+                            flags: { guardianWatcher: true },
+                            complete: true,
+                            log: 'You chose to observe the guardian from afar, recording what you learned in your codex.'
+                        }
+                    }
+                ]
+            }
+        ],
+        completionRewards: {
+            lore: ['forest_whispers_story']
+        }
+    },
+    castle_intrigue: {
+        id: 'castle_intrigue',
+        title: 'Castle Intrigue',
+        triggerLocation: 'castle',
+        minLevel: 1,
+        image: '🏰',
+        steps: [
+            {
+                id: 'entrance',
+                prompt:
+                    'A castle squire rushes toward you, clutching sealed parchment. "Can you deliver this before the guards notice?"',
+                image: '📜',
+                choices: [
+                    {
+                        id: 'help',
+                        label: 'Agree to help the squire',
+                        outcome: {
+                            message:
+                                'You accept the letter and weave through the great hall, avoiding curious nobles.',
+                            xp: 30,
+                            addLore: ['castle_squire'],
+                            nextStepId: 'delivery',
+                            log: 'You agreed to help the castle squire deliver a secret message.'
+                        }
+                    },
+                    {
+                        id: 'refuse',
+                        label: 'Refuse politely',
+                        outcome: {
+                            message:
+                                'You decline and watch the squire hurry off alone. Rumors continue to swirl through the castle.',
+                            xp: 20,
+                            complete: true,
+                            log: 'You refused the errand, allowing castle rumors to remain a mystery—for now.'
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'delivery',
+                prompt:
+                    'Two armored guards block the corridor. One eyes the sealed letter suspiciously. "State your business."',
+                image: '🛡️',
+                choices: [
+                    {
+                        id: 'improvise',
+                        label: 'Improvise a clever excuse',
+                        outcome: {
+                            message:
+                                'You spin a convincing tale about urgent royal instructions. The guards stand aside.',
+                            xp: 50,
+                            gold: 25,
+                            addLore: ['castle_secret'],
+                            complete: true,
+                            flags: { castleGuardsFooled: true },
+                            log: 'You slipped past the guards and learned whispers of a hidden royal vault.'
+                        }
+                    },
+                    {
+                        id: 'be_honest',
+                        label: 'Speak honestly about the squire',
+                        outcome: {
+                            message:
+                                'You explain the squire\'s plea. The guards soften and escort you to the inner chamber.',
+                            xp: 45,
+                            rewardItem: {
+                                id: 'polished_signet',
+                                name: 'Polished Signet',
+                                type: 'trinket',
+                                rarity: 'uncommon',
+                                description: 'Proof that castle staff trust your intentions.'
+                            },
+                            addLore: ['castle_intrigue_story'],
+                            flags: { castleTrustGained: true },
+                            complete: true,
+                            log: 'You earned the castle staff\'s trust and received a polished signet as thanks.'
+                        }
+                    }
+                ]
+            }
+        ],
+        completionRewards: {
+            xp: 40,
+            gold: 30,
+            lore: ['castle_intrigue_story']
+        }
+    }
+};
+
+function getDefaultStoryState() {
+    return {
+        activeChain: null,
+        currentStepId: null,
+        completedChains: [],
+        flags: {},
+        history: []
+    };
+}
+
+function getDefaultCodex() {
+    return {
+        loreEntries: [],
+        bestiary: [],
+        encounterLog: []
+    };
+}
+
+function ensureStoryState(state) {
+    if (!state.storyState || typeof state.storyState !== 'object') {
+        state.storyState = getDefaultStoryState();
+    } else {
+        state.storyState.completedChains = Array.isArray(state.storyState.completedChains)
+            ? state.storyState.completedChains
+            : [];
+        state.storyState.flags = state.storyState.flags && typeof state.storyState.flags === 'object'
+            ? state.storyState.flags
+            : {};
+        state.storyState.history = Array.isArray(state.storyState.history) ? state.storyState.history : [];
+    }
+    return state.storyState;
+}
+
+function ensureCodex(state) {
+    if (!state.codex || typeof state.codex !== 'object') {
+        state.codex = getDefaultCodex();
+    } else {
+        state.codex.loreEntries = Array.isArray(state.codex.loreEntries) ? state.codex.loreEntries : [];
+        state.codex.bestiary = Array.isArray(state.codex.bestiary) ? state.codex.bestiary : [];
+        state.codex.encounterLog = Array.isArray(state.codex.encounterLog) ? state.codex.encounterLog : [];
+    }
+    return state.codex;
+}
+
+function formatTimestamp(timestamp) {
+    try {
+        return new Date(timestamp).toLocaleString();
+    } catch (error) {
+        return '';
+    }
+}
+
+function formatLocationName(locationId) {
+    const location = gameScenarios[locationId];
+    if (location?.name) {
+        return location.name.replace(/^[^\w]*(.*)$/u, '$1');
+    }
+    return locationId
+        .split('-')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+function addCodexLog(state, details) {
+    ensureCodex(state);
+    if (!details) {
+        return;
+    }
+
+    const entry = typeof details === 'string'
+        ? { text: details }
+        : { ...details };
+
+    entry.id = entry.id || `log_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+    entry.timestamp = entry.timestamp || Date.now();
+    entry.type = entry.type || 'story';
+    entry.location = entry.location || null;
+
+    state.codex.encounterLog.unshift(entry);
+    if (state.codex.encounterLog.length > CODEX_MAX_LOG_ENTRIES) {
+        state.codex.encounterLog.length = CODEX_MAX_LOG_ENTRIES;
+    }
+}
+
+function unlockLoreEntry(state, loreId, source = 'story') {
+    ensureCodex(state);
+    const lore = loreLibrary[loreId];
+    if (!lore) {
+        return null;
+    }
+
+    const existing = state.codex.loreEntries.find(entry => entry.id === loreId);
+    if (existing) {
+        return existing;
+    }
+
+    const entry = {
+        id: lore.id,
+        title: lore.title,
+        summary: lore.summary,
+        category: lore.category,
+        source,
+        unlockedOn: Date.now()
+    };
+
+    state.codex.loreEntries.push(entry);
+    addCodexLog(state, { text: `Unlocked lore: ${lore.title}`, type: 'lore' });
+    return entry;
+}
+
+function addItemToInventory(state, item) {
+    if (!item) {
+        return null;
+    }
+
+    state.inventory = Array.isArray(state.inventory) ? state.inventory : [];
+    const normalizedId = item.id || item.name?.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const existing = normalizedId
+        ? state.inventory.find(existingItem => existingItem.id === normalizedId)
+        : null;
+
+    if (existing) {
+        existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+        return existing;
+    }
+
+    const storedItem = {
+        id: normalizedId,
+        name: item.name,
+        type: item.type || 'story_reward',
+        rarity: item.rarity || 'uncommon',
+        description: item.description || '',
+        quantity: item.quantity || 1
+    };
+
+    state.inventory.push(storedItem);
+    return storedItem;
+}
+
+function grantQuestFromStory(state, questId, sourceTitle) {
+    if (!questId || !quests[questId]) {
+        return false;
+    }
+
+    state.availableQuests = Array.isArray(state.availableQuests) ? state.availableQuests : [];
+    state.completedQuests = Array.isArray(state.completedQuests) ? state.completedQuests : [];
+
+    if (state.completedQuests.includes(questId) || state.activeQuests?.includes(questId)) {
+        return false;
+    }
+
+    if (!state.availableQuests.includes(questId)) {
+        state.availableQuests.push(questId);
+        addCodexLog(state, {
+            text: `Quest unlocked: ${quests[questId].name} (${sourceTitle})`,
+            type: 'quest'
+        });
+        return true;
+    }
+
+    return false;
+}
+
+function unlockBestiaryEntry(state, enemy, locationId) {
+    ensureCodex(state);
+    if (!enemy) {
+        return;
+    }
+
+    const existing = state.codex.bestiary.find(entry => entry.name === enemy.name);
+    if (existing) {
+        existing.encounters = (existing.encounters || 1) + 1;
+        existing.lastLocation = formatLocationName(locationId);
+        existing.lastSeen = Date.now();
+        return;
+    }
+
+    state.codex.bestiary.push({
+        id: enemy.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+        name: enemy.name,
+        rarity: enemy.rarity,
+        image: enemy.image,
+        description: enemy.description || `A ${enemy.rarity} foe often found near ${formatLocationName(locationId)}.`,
+        firstSeen: Date.now(),
+        lastSeen: Date.now(),
+        lastLocation: formatLocationName(locationId),
+        encounters: 1
+    });
+
+    addCodexLog(state, {
+        text: `Bestiary updated: ${enemy.name} sighted in ${formatLocationName(locationId)}.`,
+        type: 'bestiary',
+        location: locationId
+    });
+}
+
+function getStoryChain(chainId) {
+    return storyChains[chainId] || null;
+}
+
+function getStoryStep(chain, stepId) {
+    if (!chain || !Array.isArray(chain.steps)) {
+        return null;
+    }
+    return chain.steps.find(step => step.id === stepId) || null;
+}
+
+function finalizeStoryChain(state, chain) {
+    const storyState = ensureStoryState(state);
+    if (!storyState.completedChains.includes(chain.id)) {
+        storyState.completedChains.push(chain.id);
+    }
+    storyState.activeChain = null;
+    storyState.currentStepId = null;
+
+    if (chain.completionRewards) {
+        applyStoryRewards(state, chain.completionRewards, chain, { type: 'completion' });
+    }
+}
+
+function applyStoryRewards(state, rewards, chain, context = { type: 'choice' }) {
+    if (!rewards) {
+        return;
+    }
+
+    const rewardMessages = [];
+
+    if (rewards.xp) {
+        state.xp += rewards.xp;
+        rewardMessages.push(`⭐ +${rewards.xp} XP`);
+    }
+
+    if (rewards.gold) {
+        state.gold += rewards.gold;
+        rewardMessages.push(`💰 +${rewards.gold} gold`);
+    }
+
+    if (Array.isArray(rewards.addLore || rewards.lore)) {
+        const loreIds = rewards.addLore || rewards.lore;
+        loreIds.forEach(loreId => unlockLoreEntry(state, loreId, chain?.id || context.type));
+    }
+
+    if (rewards.rewardItem) {
+        const stored = addItemToInventory(state, rewards.rewardItem);
+        if (stored) {
+            rewardMessages.push(`🎁 Item: ${stored.name}`);
+        }
+    }
+
+    if (rewards.flags) {
+        const storyState = ensureStoryState(state);
+        Object.entries(rewards.flags).forEach(([key, value]) => {
+            storyState.flags[key] = value;
+        });
+    }
+
+    if (rewards.grantQuest) {
+        grantQuestFromStory(state, rewards.grantQuest, chain?.title || 'Story Event');
+    }
+
+    if (rewards.unlockLocation && !state.unlockedLocations.includes(rewards.unlockLocation)) {
+        state.unlockedLocations.push(rewards.unlockLocation);
+        rewardMessages.push(
+            `🗺️ New location unlocked: ${formatLocationName(rewards.unlockLocation)}`
+        );
+    }
+
+    return rewardMessages;
+}
+
+function presentStoryChoices(chain, step) {
+    if (!step || !Array.isArray(step.choices) || step.choices.length === 0) {
+        return null;
+    }
+
+    if (step.choices.length === 1) {
+        return step.choices[0];
+    }
+
+    const promptBody = [chain.title, '', step.prompt, ''];
+    step.choices.forEach((choice, index) => {
+        promptBody.push(`${index + 1}. ${choice.label}`);
+    });
+    promptBody.push('', 'Enter a number to choose your path:');
+
+    const input = prompt(promptBody.join('\n'));
+    if (input === null) {
+        return step.choices[0];
+    }
+
+    const choiceIndex = Number.parseInt(input, 10) - 1;
+    if (Number.isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex >= step.choices.length) {
+        return step.choices[0];
+    }
+
+    return step.choices[choiceIndex];
+}
+
+function resolveStoryStep(state, chain, step, locationId) {
+    const choice = presentStoryChoices(chain, step);
+    if (!choice || !choice.outcome) {
+        return false;
+    }
+
+    const storyState = ensureStoryState(state);
+    storyState.history.push({
+        chainId: chain.id,
+        stepId: step.id,
+        choiceId: choice.id,
+        timestamp: Date.now()
+    });
+
+    const rewardMessages = applyStoryRewards(state, choice.outcome, chain, { type: 'choice' }) || [];
+
+    if (choice.outcome.log) {
+        addCodexLog(state, {
+            text: choice.outcome.log,
+            type: 'story',
+            location: locationId
+        });
+    } else {
+        addCodexLog(state, {
+            text: `${chain.title}: ${choice.label}`,
+            type: 'story',
+            location: locationId
+        });
+    }
+
+    const messageLines = [choice.outcome.message || 'A quiet moment passes...'];
+    if (rewardMessages.length > 0) {
+        messageLines.push('', rewardMessages.join('\n'));
+    }
+
+    if (choice.outcome.nextStepId) {
+        storyState.activeChain = chain.id;
+        storyState.currentStepId = choice.outcome.nextStepId;
+    } else if (choice.outcome.complete || !choice.outcome.nextStepId) {
+        finalizeStoryChain(state, chain);
+    }
+
+    const gameMessage = document.getElementById('game-message');
+    if (gameMessage) {
+        gameMessage.textContent = messageLines.join('\n');
+    }
+
+    const imageEl = document.getElementById('game-image');
+    if (imageEl) {
+        imageEl.textContent = choice.outcome.image || step.image || chain.image || '✨';
+    }
+
+    return true;
+}
+
+function getActiveStoryStep(state, locationId) {
+    const storyState = ensureStoryState(state);
+    if (!storyState.activeChain) {
+        return null;
+    }
+
+    const chain = getStoryChain(storyState.activeChain);
+    if (!chain) {
+        storyState.activeChain = null;
+        storyState.currentStepId = null;
+        return null;
+    }
+
+    const stepId = storyState.currentStepId || chain.steps[0]?.id;
+    const step = getStoryStep(chain, stepId);
+    if (!step) {
+        finalizeStoryChain(state, chain);
+        return null;
+    }
+
+    if (step.location && step.location !== locationId) {
+        return null;
+    }
+
+    return { chain, step };
+}
+
+function tryTriggerStoryChain(state, locationId) {
+    const storyState = ensureStoryState(state);
+    if (storyState.activeChain) {
+        return null;
+    }
+
+    const availableChains = Object.values(storyChains);
+    for (const chain of availableChains) {
+        if (chain.triggerLocation !== locationId) {
+            continue;
+        }
+
+        if (storyState.completedChains.includes(chain.id)) {
+            continue;
+        }
+
+        if (chain.minLevel && state.level < chain.minLevel) {
+            continue;
+        }
+
+        if (chain.requiredFlags) {
+            const hasAllFlags = chain.requiredFlags.every(flag => storyState.flags[flag]);
+            if (!hasAllFlags) {
+                continue;
+            }
+        }
+
+        const firstStep = chain.steps[0];
+        if (!firstStep) {
+            continue;
+        }
+
+        storyState.activeChain = chain.id;
+        storyState.currentStepId = firstStep.id;
+
+        addCodexLog(state, {
+            text: `Story discovered: ${chain.title}`,
+            type: 'story',
+            location: locationId
+        });
+
+        return { chain, step: firstStep };
+    }
+
+    return null;
+}
+
+function handleStoryProgress(state, locationId) {
+    const active = getActiveStoryStep(state, locationId);
+    if (active) {
+        return resolveStoryStep(state, active.chain, active.step, locationId);
+    }
+
+    const triggered = tryTriggerStoryChain(state, locationId);
+    if (triggered) {
+        return resolveStoryStep(state, triggered.chain, triggered.step, locationId);
+    }
+
+    return false;
 }
 
 // Home Section
@@ -642,29 +1465,66 @@ function loadHome() {
 function loadGallery() {
     const galleryGrid = document.getElementById('gallery-grid');
     const emptyMessage = document.getElementById('gallery-empty');
+    if (!galleryGrid || !emptyMessage) {
+        return;
+    }
+
     const pictures = dataManager.getPictures();
 
     if (pictures.length === 0) {
         galleryGrid.style.display = 'none';
         emptyMessage.style.display = 'block';
-    } else {
-        galleryGrid.style.display = 'grid';
-        emptyMessage.style.display = 'none';
-        galleryGrid.innerHTML = pictures
-            .map(
-                (pic, index) => `
-            <div class="gallery-item">
-                <img src="${escapeHtml(pic.url)}" alt="${escapeHtml(pic.caption)}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22250%22 height=%22250%22%3E%3Crect width=%22250%22 height=%22250%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3EImage Not Found%3C/text%3E%3C/svg%3E'">
-                <div class="gallery-caption">${escapeHtml(pic.caption)}</div>
-                <button class="delete-btn" onclick="deletePicture(${index})">×</button>
-            </div>
-        `
-            )
-            .join('');
+        galleryGrid.textContent = '';
+        return;
     }
+
+    galleryGrid.style.display = 'grid';
+    emptyMessage.style.display = 'none';
+    galleryGrid.textContent = '';
+
+    const fragment = document.createDocumentFragment();
+
+    pictures.forEach((pic, index) => {
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
+        galleryItem.dataset.index = String(index);
+
+        const image = document.createElement('img');
+        const imageUrl = isSafeImageUrl(pic?.url) ? pic.url : '';
+        image.src = imageUrl || GALLERY_FALLBACK_SRC;
+        image.alt = typeof pic?.caption === 'string' ? pic.caption : 'Gallery item';
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        image.width = 400;
+        image.height = 250;
+        image.addEventListener('error', () => {
+            if (image.dataset.fallbackApplied === 'true') {
+                return;
+            }
+            image.dataset.fallbackApplied = 'true';
+            image.src = GALLERY_FALLBACK_SRC;
+        });
+
+        const caption = document.createElement('div');
+        caption.className = 'gallery-caption';
+        caption.textContent = typeof pic?.caption === 'string' ? pic.caption : '';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'delete-btn';
+        deleteButton.dataset.index = String(index);
+        deleteButton.setAttribute('aria-label', 'Delete picture');
+        deleteButton.textContent = '×';
+
+        galleryItem.appendChild(image);
+        galleryItem.appendChild(caption);
+        galleryItem.appendChild(deleteButton);
+        fragment.appendChild(galleryItem);
+    });
+
+    galleryGrid.appendChild(fragment);
 }
 
-// eslint-disable-next-line no-unused-vars
 function deletePicture(index) {
     if (confirm('Are you sure you want to delete this picture?')) {
         dataManager.deletePicture(index);
@@ -685,26 +1545,203 @@ function loadStories() {
     } else {
         storiesList.style.display = 'flex';
         emptyMessage.style.display = 'none';
-        storiesList.innerHTML = stories
-            .map(
-                (story, index) => `
-            <div class="story-item">
-                <h3>${escapeHtml(story.title)}</h3>
-                <p>${escapeHtml(story.content)}</p>
-                <button class="delete-btn" onclick="deleteStory(${index})">Delete</button>
-            </div>
-        `
-            )
-            .join('');
+        storiesList.textContent = '';
+
+        const fragment = document.createDocumentFragment();
+
+        stories.forEach((story, index) => {
+            const storyItem = document.createElement('div');
+            storyItem.className = 'story-item';
+            storyItem.dataset.index = String(index);
+
+            const title = document.createElement('h3');
+            title.textContent = typeof story?.title === 'string' ? story.title : '';
+
+            const content = document.createElement('p');
+            content.textContent = typeof story?.content === 'string' ? story.content : '';
+
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'delete-btn';
+            deleteButton.dataset.index = String(index);
+            deleteButton.textContent = 'Delete';
+
+            storyItem.appendChild(title);
+            storyItem.appendChild(content);
+            storyItem.appendChild(deleteButton);
+            fragment.appendChild(storyItem);
+        });
+
+        storiesList.appendChild(fragment);
     }
 }
 
-// eslint-disable-next-line no-unused-vars
 function deleteStory(index) {
     if (confirm('Are you sure you want to delete this story?')) {
         dataManager.deleteStory(index);
         loadStories();
         showMessage('Story deleted successfully!', 'success');
+    }
+}
+
+function loadCodex() {
+    const loreList = document.getElementById('codex-lore-list');
+    const loreEmpty = document.getElementById('codex-lore-empty');
+    const bestiaryList = document.getElementById('codex-bestiary-list');
+    const bestiaryEmpty = document.getElementById('codex-bestiary-empty');
+    const logList = document.getElementById('codex-log-list');
+    const logEmpty = document.getElementById('codex-log-empty');
+
+    if (!loreList || !loreEmpty || !bestiaryList || !bestiaryEmpty || !logList || !logEmpty) {
+        return;
+    }
+
+    const state = dataManager.getGameState();
+    ensureCodex(state);
+
+    const buildCard = (title, summary, meta) => {
+        const card = document.createElement('article');
+        card.className = 'codex-card';
+
+        const heading = document.createElement('h4');
+        heading.textContent = title;
+        card.appendChild(heading);
+
+        if (summary) {
+            const summaryEl = document.createElement('p');
+            summaryEl.textContent = summary;
+            card.appendChild(summaryEl);
+        }
+
+        if (meta) {
+            const metaEl = document.createElement('span');
+            metaEl.className = 'codex-meta';
+            metaEl.textContent = meta;
+            card.appendChild(metaEl);
+        }
+
+        return card;
+    };
+
+    // Lore entries
+    const sortedLore = [...state.codex.loreEntries].sort(
+        (a, b) => (b.unlockedOn || 0) - (a.unlockedOn || 0)
+    );
+    loreList.textContent = '';
+    if (sortedLore.length === 0) {
+        loreList.style.display = 'none';
+        loreEmpty.style.display = 'block';
+    } else {
+        loreList.style.display = 'grid';
+        loreEmpty.style.display = 'none';
+
+        const loreFragment = document.createDocumentFragment();
+        sortedLore.forEach(entry => {
+            const metaParts = [];
+            if (entry.category) {
+                metaParts.push(entry.category);
+            }
+            if (entry.unlockedOn) {
+                metaParts.push(formatTimestamp(entry.unlockedOn));
+            }
+
+            loreFragment.appendChild(
+                buildCard(entry.title, entry.summary, metaParts.filter(Boolean).join(' • '))
+            );
+        });
+        loreList.appendChild(loreFragment);
+    }
+
+    // Bestiary entries
+    const sortedBestiary = [...state.codex.bestiary].sort(
+        (a, b) => (b.lastSeen || 0) - (a.lastSeen || 0)
+    );
+    bestiaryList.textContent = '';
+    if (sortedBestiary.length === 0) {
+        bestiaryList.style.display = 'none';
+        bestiaryEmpty.style.display = 'block';
+    } else {
+        bestiaryList.style.display = 'grid';
+        bestiaryEmpty.style.display = 'none';
+
+        const bestiaryFragment = document.createDocumentFragment();
+        sortedBestiary.forEach(entry => {
+            const card = document.createElement('article');
+            card.className = 'codex-card bestiary';
+
+            const header = document.createElement('div');
+            header.className = 'bestiary-header';
+
+            const icon = document.createElement('span');
+            icon.className = 'bestiary-icon';
+            icon.textContent = entry.image || '❓';
+
+            const titleWrap = document.createElement('div');
+
+            const name = document.createElement('h4');
+            name.textContent = entry.name;
+
+            const tag = document.createElement('span');
+            tag.className = 'codex-meta';
+            tag.textContent = `${entry.rarity?.toUpperCase() || 'UNKNOWN'} • ${entry.encounters || 1} sighted`;
+
+            titleWrap.appendChild(name);
+            titleWrap.appendChild(tag);
+            header.appendChild(icon);
+            header.appendChild(titleWrap);
+
+            const description = document.createElement('p');
+            description.textContent = entry.description;
+
+            const footer = document.createElement('span');
+            footer.className = 'codex-meta';
+            footer.textContent = `Last seen ${formatTimestamp(entry.lastSeen)} in ${entry.lastLocation || 'unknown'}`;
+
+            card.appendChild(header);
+            card.appendChild(description);
+            card.appendChild(footer);
+
+            bestiaryFragment.appendChild(card);
+        });
+
+        bestiaryList.appendChild(bestiaryFragment);
+    }
+
+    // Encounter log (limit display to latest 25 entries)
+    const recentLogs = [...state.codex.encounterLog].slice(0, 25);
+    logList.textContent = '';
+    if (recentLogs.length === 0) {
+        logList.style.display = 'none';
+        logEmpty.style.display = 'block';
+    } else {
+        logList.style.display = 'flex';
+        logEmpty.style.display = 'none';
+
+        const logFragment = document.createDocumentFragment();
+        recentLogs.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'codex-log-entry';
+
+            const time = document.createElement('span');
+            time.className = 'codex-log-time';
+            time.textContent = formatTimestamp(entry.timestamp);
+
+            const text = document.createElement('p');
+            text.textContent = entry.text;
+
+            item.appendChild(time);
+            item.appendChild(text);
+
+            if (entry.location) {
+                const location = document.createElement('span');
+                location.className = 'codex-meta';
+                location.textContent = formatLocationName(entry.location);
+                item.appendChild(location);
+            }
+            logFragment.appendChild(item);
+        });
+
+        logList.appendChild(logFragment);
     }
 }
 
@@ -2937,6 +3974,19 @@ function explore() {
         return;
     }
 
+    ensureStoryState(state);
+    ensureCodex(state);
+
+    const storyHandled = handleStoryProgress(state, currentLocation);
+    if (storyHandled) {
+        dataManager.saveGameState(state);
+        updateGameDisplay();
+        if (loadedSections.has('codex')) {
+            loadCodex();
+        }
+        return;
+    }
+
     state.explorationCount = (state.explorationCount || 0) + 1;
 
     // Weather System - Update weather and get current conditions
@@ -2965,6 +4015,9 @@ function explore() {
                 message += `⚠️ ${specialEncounter.name} emerges! ${specialEncounter.description}`;
                 document.getElementById('game-message').textContent = message;
                 document.getElementById('game-image').textContent = locationData.image;
+                state.lastEncounterLocation = currentLocation;
+                state.lastEncounterEnemy = bossEnemy.name;
+                state.lastEncounterTimestamp = Date.now();
                 startBattle(state, bossEnemy);
                 dataManager.saveGameState(state);
                 return;
@@ -3014,12 +4067,16 @@ function explore() {
         // Regular encounters (50% chance)
         const encounter = selectLocationEncounter(currentLocation, state.level);
 
-        message += `A ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
-        document.getElementById('game-message').textContent = message;
-        document.getElementById('game-image').textContent = locationData.image;
+    message += `A ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
+    document.getElementById('game-message').textContent = message;
+    document.getElementById('game-image').textContent = locationData.image;
 
-        // Start turn-based battle
-        startBattle(state, encounter);
+    state.lastEncounterLocation = currentLocation;
+    state.lastEncounterEnemy = encounter.name;
+    state.lastEncounterTimestamp = Date.now();
+
+    // Start turn-based battle
+    startBattle(state, encounter);
         dataManager.saveGameState(state);
         return;
     } else {
@@ -3212,6 +4269,15 @@ function startBattle(state, enemy) {
     // Apply weather effects to enemy stats
     const currentWeather = getCurrentWeather(state);
     const weatherMod = currentWeather.effects.enemyDangerMod || 1.0;
+
+    ensureCodex(state);
+    const battleLocation = state.lastEncounterLocation || state.currentLocation || 'unknown';
+    unlockBestiaryEntry(state, enemy, battleLocation);
+    addCodexLog(state, {
+        text: `Encountered a ${enemy.rarity} ${enemy.name}!`,
+        type: 'battle',
+        location: battleLocation
+    });
 
     // Initialize battle state with weather-modified enemy
     enemy.currentHp = enemy.hp;
@@ -3458,6 +4524,8 @@ function processStatusEffects() {
 function endBattle(state, victory, battleLog) {
     const enemy = state.currentEnemy;
     let finalMessage = battleLog + '\n\n';
+    const battleLocation = state.lastEncounterLocation || state.currentLocation || null;
+    let xpGained = 0;
 
     if (victory) {
         // Victory rewards (with weather, pet, and skill effects)
@@ -3465,7 +4533,7 @@ function endBattle(state, victory, battleLog) {
         const weatherXp = applyWeatherEffects(enemy.xp, 'xpBonus', state);
         const petXp = applyPetBonuses(state, 'xp', weatherXp);
         const skillXp = applyPassiveSkills(state, 'xp', petXp);
-        const xpGained = Math.max(1, skillXp);
+        xpGained = Math.max(1, skillXp);
 
         state.xp += xpGained;
         state.gold += enemy.gold;
@@ -3518,10 +4586,22 @@ function endBattle(state, victory, battleLog) {
             // Check if new locations are unlocked
             checkLocationUnlocks(state);
         }
+
+        addCodexLog(state, {
+            text: `Victory over ${enemy.name}! +${xpGained} XP, +${enemy.gold} gold.`,
+            type: 'battle',
+            location: battleLocation
+        });
     } else {
         finalMessage += `💀 DEFEAT! 💀\n`;
         finalMessage += `You were defeated by ${enemy.name}!\n`;
         finalMessage += `Click 'New Game' to try again.\n`;
+
+        addCodexLog(state, {
+            text: `Defeated by ${enemy.name}. Time to regroup and recover.`,
+            type: 'battle',
+            location: battleLocation
+        });
     }
 
     // Apply pet post-battle effects
@@ -3545,6 +4625,10 @@ function endBattle(state, victory, battleLog) {
     dataManager.saveGameState(state);
     updateGameDisplay();
     updateQuestDisplay(); // Refresh quest display after battle
+
+    if (loadedSections.has('codex')) {
+        loadCodex();
+    }
 }
 
 function checkLocationUnlocks(state) {
@@ -4202,6 +5286,10 @@ function addPicture() {
     const caption = document.getElementById('picture-caption').value.trim();
 
     if (url && caption) {
+        if (!isSafeImageUrl(url)) {
+            showMessage('Please enter a valid image URL.', 'error');
+            return;
+        }
         dataManager.addPicture({ url, caption });
         document.getElementById('picture-url').value = '';
         document.getElementById('picture-caption').value = '';
@@ -4272,6 +5360,40 @@ document.getElementById('choose-class-btn').addEventListener('click', chooseClas
 document.getElementById('quests-btn').addEventListener('click', showQuestDetails);
 document.getElementById('reset-game-btn').addEventListener('click', resetGame);
 document.getElementById('skills-btn-main').addEventListener('click', showSkillsOutsideBattle);
+
+const galleryGridElement = document.getElementById('gallery-grid');
+if (galleryGridElement) {
+    galleryGridElement.addEventListener('click', event => {
+        const button = event.target.closest('button.delete-btn');
+        if (!button || !galleryGridElement.contains(button)) {
+            return;
+        }
+
+        const index = Number(button.dataset.index);
+        if (Number.isNaN(index)) {
+            return;
+        }
+
+        deletePicture(index);
+    });
+}
+
+const storiesListElement = document.getElementById('stories-list');
+if (storiesListElement) {
+    storiesListElement.addEventListener('click', event => {
+        const button = event.target.closest('button.delete-btn');
+        if (!button || !storiesListElement.contains(button)) {
+            return;
+        }
+
+        const index = Number(button.dataset.index);
+        if (Number.isNaN(index)) {
+            return;
+        }
+
+        deleteStory(index);
+    });
+}
 
 // Battle action event listeners
 document.getElementById('attack-btn').addEventListener('click', () => {
@@ -4410,13 +5532,13 @@ function showUpdateNotification() {
 // PWA Install Prompt
 let deferredPrompt;
 function setupPWAInstall() {
-    window.addEventListener('beforeinstallprompt', e => {
+    globalThis.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredPrompt = e;
         showInstallButton();
     });
 
-    window.addEventListener('appinstalled', () => {
+    globalThis.addEventListener('appinstalled', () => {
         console.log('PWA was installed');
         hideInstallButton();
     });
@@ -4609,29 +5731,11 @@ function setupTouchGestures() {
 
 // Mobile-specific optimizations
 function setupMobileOptimizations() {
-    // Prevent zoom on input focus
-    const inputs = document.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-        input.addEventListener('focus', () => {
-            const viewport = document.querySelector('meta[name=viewport]');
-            viewport.setAttribute(
-                'content',
-                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-            );
-        });
-
-        input.addEventListener('blur', () => {
-            const viewport = document.querySelector('meta[name=viewport]');
-            viewport.setAttribute(
-                'content',
-                'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes'
-            );
-        });
-    });
-
-    // Optimize game button interactions for touch
     const gameButtons = document.querySelectorAll('.game-btn');
-    gameButtons.forEach(btn => {
+    if (gameButtons.length === 0) {
+        return;
+    }
+    for (const btn of gameButtons) {
         btn.addEventListener(
             'touchstart',
             function () {
@@ -4647,27 +5751,29 @@ function setupMobileOptimizations() {
             },
             { passive: true }
         );
-    });
+    }
+}
+
+function updateOnlineStatus() {
+    const status = navigator.onLine ? 'online' : 'offline';
+    document.body.classList.remove('online', 'offline');
+    document.body.classList.add(status);
+
+    if (!navigator.onLine) {
+        showMessage(
+            '📱 You are offline. Game data is saved locally and will sync when connection is restored.',
+            'success'
+        );
+        return;
+    }
+
+    showMessage('🌐 Connection restored! Welcome back online.', 'success');
 }
 
 // Offline detection and notifications
 function setupOfflineHandling() {
-    function updateOnlineStatus() {
-        const status = navigator.onLine ? 'online' : 'offline';
-        document.body.className = document.body.className.replace(/\b(online|offline)\b/g, '') + ` ${status}`;
-
-        if (!navigator.onLine) {
-            showMessage(
-                '📱 You are offline. Game data is saved locally and will sync when connection is restored.',
-                'success'
-            );
-        } else {
-            showMessage('🌐 Connection restored! Welcome back online.', 'success');
-        }
-    }
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
+    globalThis.addEventListener('online', updateOnlineStatus);
+    globalThis.addEventListener('offline', updateOnlineStatus);
 
     // Initial status
     updateOnlineStatus();
@@ -4689,7 +5795,7 @@ function setupPerformanceMonitoring() {
     }
 
     // Monitor long tasks that could affect responsiveness
-    if ('PerformanceObserver' in window) {
+    if ('PerformanceObserver' in globalThis) {
         const observer = new PerformanceObserver(list => {
             list.getEntries().forEach(entry => {
                 if (entry.duration > 50) {
@@ -4698,11 +5804,8 @@ function setupPerformanceMonitoring() {
                 }
             });
         });
-
-        try {
+        if (typeof observer.observe === 'function') {
             observer.observe({ entryTypes: ['longtask'] });
-        } catch (e) {
-            // Longtask observer not supported
         }
     }
 }
@@ -4710,49 +5813,13 @@ function setupPerformanceMonitoring() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
+    ensureSectionLoaded('home');
+    checkAuth();
 
-    // Add a small delay to ensure DOM is fully ready
-    setTimeout(() => {
-        checkAuth();
-    }, 100);
-
-    loadHome();
-    loadGallery();
-    loadStories();
-    loadGame();
-    if (dataManager.isAuthenticated()) {
-        loadAdmin();
-    }
-
-    // Initialize PWA and mobile features
     registerServiceWorker();
     setupPWAInstall();
     setupTouchGestures();
     setupMobileOptimizations();
-
-    // Ensure auth check runs after everything is loaded
-    setTimeout(() => {
-        checkAuth();
-
-        // Emergency fallback - force create login button
-        const testElement = document.createElement('div');
-        testElement.style.position = 'fixed';
-        testElement.style.top = '10px';
-        testElement.style.right = '10px';
-        testElement.style.backgroundColor = 'blue';
-        testElement.style.color = 'white';
-        testElement.style.padding = '10px';
-        testElement.style.zIndex = '9999';
-        testElement.textContent = 'LOGIN BUTTON TEST';
-        testElement.onclick = () => {
-            const sections = document.querySelectorAll('.section');
-            sections.forEach(s => s.classList.remove('active'));
-            document.getElementById('login').classList.add('active');
-        };
-        document.body.appendChild(testElement);
-
-        console.log('Emergency login button created');
-    }, 500);
     setupOfflineHandling();
     setupPerformanceMonitoring();
 });
