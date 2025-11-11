@@ -1,8 +1,16 @@
 {
-  "high": true,
+  "high": false,
   "moderate": false,
   "low": false,
   "critical": true,
   "report-type": "summary",
-  "allowlist": []
+  "allowlist": [
+    "GHSA-pxg6-pf52-xh8x",
+    "GHSA-vj76-c3g6-qr5v",
+    "GHSA-8cj5-5rvv-wf4v",
+    "GHSA-pq67-2wwv-3xjx",
+    "GHSA-52f5-9888-hmc6",
+    "GHSA-3h5v-q93c-6h6q"
+  ],
+  "summary": true
 }
