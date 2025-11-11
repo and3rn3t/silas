@@ -1,0 +1,24 @@
+# Browserslist configuration for Silas Anderson's website
+# https://browsersl.ist/
+
+# Modern browsers with ES2022 support
+> 0.5%
+last 2 versions
+not dead
+not op_mini all
+
+# Specific browser support
+Chrome >= 90
+Firefox >= 88
+Safari >= 14
+Edge >= 90
+
+# Mobile browsers
+iOS >= 14
+Android >= 90
+
+# Exclude very old browsers
+not IE 11
+not Chrome < 90
+not Firefox < 88
+not Safari < 14

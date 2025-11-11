@@ -1,0 +1,67 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": ["error", 4],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-unused-vars": ["warn"],
+    "no-console": "off",
+    "no-alert": "warn",
+    "eqeqeq": "error",
+    "curly": "error",
+    "brace-style": ["error", "1tbs"],
+    "comma-dangle": ["error", "never"],
+    "max-len": ["warn", { "code": 120 }],
+    "no-trailing-spaces": "error",
+    "no-multiple-empty-lines": ["error", { "max": 2 }],
+    "space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
+    ],
+    "keyword-spacing": "error",
+    "space-infix-ops": "error",
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-implicit-globals": "error"
+  },
+  "globals": {
+    "dataManager": "readonly",
+    "gameScenarios": "readonly",
+    "encounters": "readonly",
+    "equipment": "readonly",
+    "characterClasses": "readonly",
+    "skills": "readonly",
+    "quests": "readonly",
+    "dailyQuests": "readonly",
+    "achievements": "readonly"
+  },
+  "ignorePatterns": ["node_modules/", "coverage/", "playwright-report/", "test-results/", ".wrangler/"],
+  "overrides": [
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-undef": "off"
+      }
+    }
+  ]
+}
