@@ -41,14 +41,43 @@ All data is stored in your browser's LocalStorage:
 - Pure HTML, CSS, and JavaScript
 - No frameworks or dependencies
 - Fully client-side application
-- Mobile-friendly responsive design
+- **Progressive Web App (PWA)** - installable on mobile devices
+- **Advanced Mobile Optimization** - touch gestures, responsive design, offline support
+- **Cross-Browser Compatibility** - works on all modern browsers and devices
 
-## 🚀 Deployment
+## � Mobile Features
 
-This website is deployed on Cloudflare Pages:
+### Progressive Web App (PWA)
+
+- **Install on Mobile**: Add to home screen for app-like experience
+- **Offline Support**: Works without internet connection
+- **Push Notifications**: Stay updated with new features
+- **Background Sync**: Data syncs when connection is restored
+
+### Mobile Optimizations
+
+- **Touch-Friendly Interface**: Large buttons and touch targets (44px minimum)
+- **Swipe Gestures**: Swipe left/right to navigate between sections
+- **Responsive Design**: Adapts to all screen sizes from 320px to desktop
+- **Performance Optimized**: Fast loading on slower mobile connections
+- **Landscape Support**: Full functionality in both orientations
+
+### Device Support
+
+- ✅ **iPhone** (SE, 12, 12 Pro Max, and newer)
+- ✅ **Android** (Pixel, Samsung Galaxy, and modern devices)
+- ✅ **Tablets** (iPad, Android tablets)
+- ✅ **Desktop** (Chrome, Firefox, Safari, Edge)
+
+## �🚀 Deployment
+
+This website is deployed on Cloudflare Pages with global CDN:
 
 - **Production URL**: <https://silas-anderson.pages.dev>
 - **Custom Domain**: <https://silasanderson.us> ✅ **LIVE**
+- **Global Performance**: Fast loading worldwide
+- **Automatic HTTPS**: Secure connections everywhere
+- **Edge Caching**: Optimized for mobile networks
 
 ### Deploy Updates
 

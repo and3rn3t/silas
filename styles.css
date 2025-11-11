@@ -53,6 +53,11 @@ body {
     transition: all 0.3s ease;
     font-weight: bold;
     border: 2px solid transparent;
+    /* Touch-friendly improvements */
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .nav-link:hover,
@@ -319,6 +324,12 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    /* Touch-friendly improvements */
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .game-btn:hover {
@@ -329,6 +340,21 @@ body {
 
 .game-btn:active {
     transform: translateY(-1px);
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+}
+
+/* Touch device specific styles */
+@media (pointer: coarse) {
+    .game-btn:hover {
+        transform: none;
+        background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-btn:active {
+        transform: scale(0.95);
+        background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    }
 }
 
 /* Battle UI */
@@ -567,26 +593,489 @@ footer {
     margin-top: 30px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .logo {
-        font-size: 1.5em;
+/* Enhanced Responsive Design */
+/* Large Tablets and Small Desktops (1024px and down) */
+@media (max-width: 1024px) {
+    .container {
+        padding: 15px;
     }
-    
-    .nav-links {
-        flex-direction: column;
+
+    .section {
+        padding: 20px;
     }
-    
+
     .game-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
     }
-    
-    .gallery-grid {
-        grid-template-columns: 1fr;
+
+    .stat-item {
+        padding: 8px;
+        font-size: 0.8em;
     }
 }
 
-/* Location Selector */
+/* Tablets (768px and down) */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .logo {
+        font-size: 1.4em;
+        margin-bottom: 10px;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .nav-link {
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+
+    .section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .section h2 {
+        font-size: 1.6em;
+        margin-bottom: 15px;
+    }
+
+    .game-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .location-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .location-card {
+        padding: 12px;
+    }
+
+    .location-card .location-emoji {
+        font-size: 2em;
+    }
+
+    .game-display {
+        padding: 20px;
+        min-height: 150px;
+    }
+
+    .game-message {
+        font-size: 1em;
+    }
+
+    .game-image {
+        font-size: 4em;
+    }
+
+    .game-controls {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .game-btn {
+        padding: 12px;
+        font-size: 0.9em;
+    }
+}
+
+/* Mobile Phones (480px and down) */
+@media (max-width: 480px) {
+    .container {
+        padding: 5px;
+    }
+
+    .navbar {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .logo {
+        font-size: 1.2em;
+        margin-bottom: 8px;
+    }
+
+    .nav-links {
+        gap: 5px;
+    }
+
+    .nav-link {
+        padding: 6px 12px;
+        font-size: 0.8em;
+        border-radius: 20px;
+    }
+
+    .section {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .section h2 {
+        font-size: 1.4em;
+        margin-bottom: 12px;
+    }
+
+    .section h3 {
+        font-size: 1.1em;
+        margin-bottom: 8px;
+    }
+
+    .game-stats {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .stat-item {
+        padding: 6px;
+        font-size: 0.75em;
+    }
+
+    .location-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .location-card {
+        padding: 10px;
+    }
+
+    .location-card .location-emoji {
+        font-size: 1.8em;
+        margin-bottom: 5px;
+    }
+
+    .location-card .location-name {
+        font-size: 1em;
+    }
+
+    .game-display {
+        padding: 15px;
+        min-height: 120px;
+    }
+
+    .game-message {
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
+    .game-image {
+        font-size: 3em;
+    }
+
+    .game-btn {
+        padding: 10px;
+        font-size: 0.8em;
+    }
+
+    .interests-display {
+        gap: 5px;
+    }
+
+    .interest-tag {
+        padding: 5px 10px;
+        font-size: 0.8em;
+    }
+
+    .gallery-grid {
+        gap: 10px;
+    }
+
+    .gallery-item {
+        border-radius: 8px;
+    }
+
+    .story-item {
+        padding: 15px;
+    }
+
+    .story-item .delete-btn {
+        padding: 4px 8px;
+        font-size: 0.7em;
+        top: 15px;
+        right: 15px;
+    }
+}
+
+/* Very Small Screens (360px and down) */
+@media (max-width: 360px) {
+    .container {
+        padding: 3px;
+    }
+
+    .navbar {
+        padding: 10px;
+    }
+
+    .logo {
+        font-size: 1.1em;
+    }
+
+    .nav-link {
+        padding: 5px 8px;
+        font-size: 0.75em;
+    }
+
+    .section {
+        padding: 10px;
+    }
+
+    .section h2 {
+        font-size: 1.2em;
+    }
+
+    .game-display {
+        padding: 10px;
+        min-height: 100px;
+    }
+
+    .game-message {
+        font-size: 0.8em;
+    }
+
+    .game-image {
+        font-size: 2.5em;
+    }
+
+    .location-card .location-emoji {
+        font-size: 1.5em;
+    }
+}
+
+/* Touch-Friendly Enhancements */
+@media (pointer: coarse) {
+    .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .game-btn {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .location-card {
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .delete-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* Landscape Orientation on Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .logo {
+        font-size: 1.1em;
+        margin-bottom: 5px;
+    }
+
+    .nav-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .section {
+        padding: 10px;
+    }
+
+    .game-display {
+        min-height: 100px;
+        padding: 15px;
+    }
+
+    .location-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* PWA and Mobile-Specific Styles */
+.install-btn {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+    border: 2px solid #34495e;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+    -webkit-tap-highlight-color: rgba(39, 174, 96, 0.3);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.install-btn:hover {
+    background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+    transform: translateY(-1px);
+}
+
+.install-btn:active {
+    transform: scale(0.95);
+}
+
+.update-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: slideInRight 0.5s ease;
+    max-width: 300px;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.update-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.update-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.dismiss-btn {
+    background: none;
+    color: white;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 5px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.dismiss-btn:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Offline Status Styles */
+body.offline .nav-link {
+    opacity: 0.7;
+}
+
+body.offline::before {
+    content: "📱 Offline Mode";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #e74c3c;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-size: 0.8em;
+    z-index: 1000;
+}
+
+body.offline .container {
+    margin-top: 30px;
+}
+
+/* Loading States for Better Mobile UX */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading::after {
+    content: "⌛";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .nav-link {
+        border: 3px solid #000;
+        color: #000;
+        background: #fff;
+    }
+
+    .game-btn {
+        border: 3px solid #000;
+        color: #000;
+        background: #fff;
+    }
+
+    .section {
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+
+    .game-btn:hover,
+    .nav-link:hover {
+        transform: none;
+    }
+}/* Location Selector */
 .location-selector {
     background: rgba(255, 255, 255, 0.1);
     padding: 20px;
@@ -782,7 +1271,7 @@ footer {
     .quests-panel {
         grid-template-columns: 1fr;
     }
-    
+
     .location-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }

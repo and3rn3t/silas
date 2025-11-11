@@ -11,15 +11,15 @@
     "sourceType": "module"
   },
   "rules": {
-    "indent": ["error", 4],
+    "indent": ["warn", 4],
     "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
+    "quotes": ["warn", "single", { "allowTemplateLiterals": true }],
     "semi": ["error", "always"],
     "no-unused-vars": ["warn"],
     "no-console": "off",
     "no-alert": "warn",
     "eqeqeq": "error",
-    "curly": "error",
+    "curly": ["warn", "multi-line"],
     "brace-style": ["error", "1tbs"],
     "comma-dangle": ["error", "never"],
     "max-len": ["warn", { "code": 120 }],
