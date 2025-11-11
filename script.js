@@ -8,7 +8,7 @@ class DataManager {
         if (!localStorage.getItem('silas-bio')) {
             localStorage.setItem(
                 'silas-bio',
-                'Hi! I\'m Silas Anderson, and I love exploring new worlds through anime and games!'
+                "Hi! I'm Silas Anderson, and I love exploring new worlds through anime and games!"
             );
         }
         if (!localStorage.getItem('silas-interests')) {
@@ -294,54 +294,54 @@ class DataManager {
 
         // Check different quest requirements
         switch (quest.type) {
-        case 'kill': {
-            progress.kills = gameState.questStats.kills;
-            isComplete = progress.kills >= quest.requirements.kills;
-            break;
-        }
-
-        case 'collect': {
-            for (const item in quest.requirements.items) {
-                const needed = quest.requirements.items[item];
-                const have = gameState.questStats.itemsCollected[item] || 0;
-                progress[item] = have;
-                if (have < needed) isComplete = false;
+            case 'kill': {
+                progress.kills = gameState.questStats.kills;
+                isComplete = progress.kills >= quest.requirements.kills;
+                break;
             }
-            break;
-        }
 
-        case 'location_clear': {
-            for (const location in quest.requirements.battles_in_location) {
-                const needed = quest.requirements.battles_in_location[location];
-                const have = gameState.questStats.battlesByLocation[location] || 0;
-                progress[location] = have;
-                if (have < needed) isComplete = false;
+            case 'collect': {
+                for (const item in quest.requirements.items) {
+                    const needed = quest.requirements.items[item];
+                    const have = gameState.questStats.itemsCollected[item] || 0;
+                    progress[item] = have;
+                    if (have < needed) isComplete = false;
+                }
+                break;
             }
-            break;
-        }
 
-        case 'boss': {
-            const bossName = quest.requirements.boss_defeat;
-            progress.boss = gameState.questStats.bossesDefeated[bossName] || false;
-            isComplete = progress.boss;
-            break;
-        }
+            case 'location_clear': {
+                for (const location in quest.requirements.battles_in_location) {
+                    const needed = quest.requirements.battles_in_location[location];
+                    const have = gameState.questStats.battlesByLocation[location] || 0;
+                    progress[location] = have;
+                    if (have < needed) isComplete = false;
+                }
+                break;
+            }
 
-        case 'survival': {
-            const locationBattles = gameState.questStats.battlesByLocation[quest.location] || 0;
-            progress.battles = locationBattles;
-            isComplete = locationBattles >= quest.requirements[quest.location + '_battles'];
-            break;
-        }
+            case 'boss': {
+                const bossName = quest.requirements.boss_defeat;
+                progress.boss = gameState.questStats.bossesDefeated[bossName] || false;
+                isComplete = progress.boss;
+                break;
+            }
 
-        case 'explore': {
-            progress.explored = gameState.questStats.artifactsFound;
-            progress.artifacts = gameState.questStats.artifactsFound;
-            isComplete =
+            case 'survival': {
+                const locationBattles = gameState.questStats.battlesByLocation[quest.location] || 0;
+                progress.battles = locationBattles;
+                isComplete = locationBattles >= quest.requirements[quest.location + '_battles'];
+                break;
+            }
+
+            case 'explore': {
+                progress.explored = gameState.questStats.artifactsFound;
+                progress.artifacts = gameState.questStats.artifactsFound;
+                isComplete =
                     progress.explored >= quest.requirements.ruins_explored &&
                     progress.artifacts >= quest.requirements.artifacts_found;
-            break;
-        }
+                break;
+            }
         }
         return { progress, isComplete };
     }
@@ -389,42 +389,42 @@ class DataManager {
         const gameState = this.getGameState();
 
         switch (action) {
-        case 'kill': {
-            gameState.questStats.kills++;
-            gameState.questStats.daily_kills++;
-            break;
-        }
+            case 'kill': {
+                gameState.questStats.kills++;
+                gameState.questStats.daily_kills++;
+                break;
+            }
 
-        case 'collect_item': {
-            const item = data.item;
-            gameState.questStats.itemsCollected[item] = (gameState.questStats.itemsCollected[item] || 0) + 1;
-            gameState.questStats.resourcesCollected++;
-            gameState.questStats.daily_resources++;
-            break;
-        }
+            case 'collect_item': {
+                const item = data.item;
+                gameState.questStats.itemsCollected[item] = (gameState.questStats.itemsCollected[item] || 0) + 1;
+                gameState.questStats.resourcesCollected++;
+                gameState.questStats.daily_resources++;
+                break;
+            }
 
-        case 'battle_location': {
-            const location = data.location;
-            const currentCount = gameState.questStats.battlesByLocation[location] || 0;
-            gameState.questStats.battlesByLocation[location] = currentCount + 1;
-            break;
-        }
+            case 'battle_location': {
+                const location = data.location;
+                const currentCount = gameState.questStats.battlesByLocation[location] || 0;
+                gameState.questStats.battlesByLocation[location] = currentCount + 1;
+                break;
+            }
 
-        case 'defeat_boss': {
-            const boss = data.boss;
-            gameState.questStats.bossesDefeated[boss] = true;
-            break;
-        }
+            case 'defeat_boss': {
+                const boss = data.boss;
+                gameState.questStats.bossesDefeated[boss] = true;
+                break;
+            }
 
-        case 'use_skill': {
-            gameState.questStats.daily_skills++;
-            break;
-        }
+            case 'use_skill': {
+                gameState.questStats.daily_skills++;
+                break;
+            }
 
-        case 'find_artifact': {
-            gameState.questStats.artifactsFound++;
-            break;
-        }
+            case 'find_artifact': {
+                gameState.questStats.artifactsFound++;
+                break;
+            }
         }
 
         // Check if any active quests are completed
@@ -716,7 +716,7 @@ const gameScenarios = {
         image: '🏰',
         level: 1,
         specialEncounters: ['Royal Guard', 'Court Mage', 'Castle Knight'],
-        resources: ['Honor Tokens', 'Royal Seal', 'Knight\'s Blessing', 'Iron Ore'],
+        resources: ['Honor Tokens', 'Royal Seal', "Knight's Blessing", 'Iron Ore'],
         questGiver: true,
         description: 'The seat of power in the realm. Knights and nobles gather here.',
         unlockCondition: null // Always available
@@ -744,7 +744,7 @@ const gameScenarios = {
         unlockCondition: { level: 5 }
     },
     mountain: {
-        name: '⛰️ Dragon\'s Peak',
+        name: "⛰️ Dragon's Peak",
         message: 'The air grows thin as you ascend the legendary mountain.',
         image: '⛰️',
         level: 4,
@@ -770,8 +770,8 @@ const gameScenarios = {
         message: 'Murky waters and twisted trees create an eerie atmosphere.',
         image: '🐸',
         level: 3,
-        specialEncounters: ['Swamp Witch', 'Bog Monster', 'Will O\' Wisp'],
-        resources: ['Witch\'s Brew', 'Swamp Gas', 'Cursed Moss'],
+        specialEncounters: ['Swamp Witch', 'Bog Monster', "Will O' Wisp"],
+        resources: ["Witch's Brew", 'Swamp Gas', 'Cursed Moss'],
         questGiver: true,
         description: 'A treacherous wetland where dark magic thrives.',
         unlockCondition: { level: 6, questCompleted: 'forest_guardian' }
@@ -807,78 +807,78 @@ const weatherTypes = {
         emoji: '☀️',
         description: 'Perfect weather for adventure!',
         effects: {
-            treasureBonus: 1.3,        // 30% more treasure
-            resourceBonus: 1.0,        // Normal resources
-            enemyDangerMod: 1.0,       // Normal enemy strength
-            xpBonus: 1.1,              // 10% XP bonus
-            encounterRateChange: 0     // Normal encounter rates
+            treasureBonus: 1.3, // 30% more treasure
+            resourceBonus: 1.0, // Normal resources
+            enemyDangerMod: 1.0, // Normal enemy strength
+            xpBonus: 1.1, // 10% XP bonus
+            encounterRateChange: 0 // Normal encounter rates
         },
-        rarity: 0.25  // 25% chance
+        rarity: 0.25 // 25% chance
     },
     cloudy: {
         name: 'Cloudy',
         emoji: '☁️',
         description: 'Overcast skies create a neutral atmosphere.',
         effects: {
-            treasureBonus: 1.0,        // Normal treasure
-            resourceBonus: 1.0,        // Normal resources
-            enemyDangerMod: 1.0,       // Normal enemy strength
-            xpBonus: 1.0,              // Normal XP
-            encounterRateChange: 0     // Normal encounter rates
+            treasureBonus: 1.0, // Normal treasure
+            resourceBonus: 1.0, // Normal resources
+            enemyDangerMod: 1.0, // Normal enemy strength
+            xpBonus: 1.0, // Normal XP
+            encounterRateChange: 0 // Normal encounter rates
         },
-        rarity: 0.3   // 30% chance
+        rarity: 0.3 // 30% chance
     },
     rain: {
         name: 'Light Rain',
         emoji: '🌧️',
         description: 'Gentle rain nourishes the land.',
         effects: {
-            treasureBonus: 0.8,        // 20% less treasure (hidden by rain)
-            resourceBonus: 1.5,        // 50% more resources (plants flourish)
-            enemyDangerMod: 0.9,       // Enemies 10% weaker (soggy)
-            xpBonus: 1,              // Normal XP
-            encounterRateChange: -0.1  // 10% fewer encounters
+            treasureBonus: 0.8, // 20% less treasure (hidden by rain)
+            resourceBonus: 1.5, // 50% more resources (plants flourish)
+            enemyDangerMod: 0.9, // Enemies 10% weaker (soggy)
+            xpBonus: 1, // Normal XP
+            encounterRateChange: -0.1 // 10% fewer encounters
         },
-        rarity: 0.2   // 20% chance
+        rarity: 0.2 // 20% chance
     },
     storm: {
         name: 'Thunderstorm',
         emoji: '⛈️',
         description: 'Lightning crackles across dark clouds!',
         effects: {
-            treasureBonus: 0.7,        // 30% less treasure
-            resourceBonus: 0.8,        // 20% fewer resources
-            enemyDangerMod: 1.4,       // Enemies 40% stronger (enraged)
-            xpBonus: 1.3,              // 30% more XP (dangerous = rewarding)
-            encounterRateChange: 0.15  // 15% more encounters
+            treasureBonus: 0.7, // 30% less treasure
+            resourceBonus: 0.8, // 20% fewer resources
+            enemyDangerMod: 1.4, // Enemies 40% stronger (enraged)
+            xpBonus: 1.3, // 30% more XP (dangerous = rewarding)
+            encounterRateChange: 0.15 // 15% more encounters
         },
-        rarity: 0.1   // 10% chance
+        rarity: 0.1 // 10% chance
     },
     fog: {
         name: 'Thick Fog',
         emoji: '🌫️',
         description: 'Dense fog obscures your vision.',
         effects: {
-            treasureBonus: 1.2,        // 20% more treasure (hidden caches visible)
-            resourceBonus: 0.7,        // 30% fewer resources (hard to see)
-            enemyDangerMod: 1.1,       // Enemies 10% stronger (ambush advantage)
-            xpBonus: 1,              // Normal XP
-            encounterRateChange: 0.1   // 10% more encounters (surprise attacks)
+            treasureBonus: 1.2, // 20% more treasure (hidden caches visible)
+            resourceBonus: 0.7, // 30% fewer resources (hard to see)
+            enemyDangerMod: 1.1, // Enemies 10% stronger (ambush advantage)
+            xpBonus: 1, // Normal XP
+            encounterRateChange: 0.1 // 10% more encounters (surprise attacks)
         },
-        rarity: 0.1   // 10% chance
+        rarity: 0.1 // 10% chance
     },
     snow: {
         name: 'Light Snow',
         emoji: '❄️',
         description: 'Gentle snowflakes drift from the sky.',
         effects: {
-            treasureBonus: 0.9,        // 10% less treasure
-            resourceBonus: 1.1,        // 10% more resources (preserved by cold)
-            enemyDangerMod: 0.8,       // Enemies 20% weaker (sluggish from cold)
-            xpBonus: 1.1,              // 10% more XP
+            treasureBonus: 0.9, // 10% less treasure
+            resourceBonus: 1.1, // 10% more resources (preserved by cold)
+            enemyDangerMod: 0.8, // Enemies 20% weaker (sluggish from cold)
+            xpBonus: 1.1, // 10% more XP
             encounterRateChange: -0.05 // 5% fewer encounters
         },
-        rarity: 0.05  // 5% chance
+        rarity: 0.05 // 5% chance
     }
 };
 
@@ -1130,7 +1130,7 @@ const craftingRecipes = {
         stealthBonus: true,
         materials: {
             'Cursed Moss': 6,
-            'Witch\'s Brew': 3,
+            "Witch's Brew": 3,
             'Swamp Gas': 4
         },
         requiredLevel: 7,
@@ -1209,8 +1209,8 @@ const craftingRecipes = {
         materials: {
             'Crafting Materials': 8,
             'Trade Goods': 6,
-            'Rope': 4,
-            'Compass': 1
+            Rope: 4,
+            Compass: 1
         },
         requiredLevel: 6,
         description: 'Improves exploration success rates by 20% for 10 explorations',
@@ -1222,8 +1222,8 @@ const craftingRecipes = {
 const craftingMaterials = {
     'Iron Ore': { description: 'Raw iron for weapon crafting', rarity: 'common' },
     'Pure Water': { description: 'Clean water for potion brewing', rarity: 'common' },
-    'Rope': { description: 'Strong rope for equipment', rarity: 'common' },
-    'Compass': { description: 'Navigation tool', rarity: 'uncommon' }
+    Rope: { description: 'Strong rope for equipment', rarity: 'common' },
+    Compass: { description: 'Navigation tool', rarity: 'uncommon' }
 };
 
 // Random Events System
@@ -1335,7 +1335,7 @@ const randomEvents = {
             {
                 chance: 0.3,
                 reward: { skill_point: 1 },
-                message: 'You learn a new skill from the scholar\'s teachings!'
+                message: "You learn a new skill from the scholar's teachings!"
             },
             {
                 chance: 0.3,
@@ -1387,7 +1387,7 @@ const randomEvents = {
             {
                 chance: 0.4,
                 reward: { pet_loyalty: 15, all_pets: true },
-                message: 'The fairy magic increases all your pets\' loyalty!'
+                message: "The fairy magic increases all your pets' loyalty!"
             },
             {
                 chance: 0.3,
@@ -1844,7 +1844,7 @@ const quests = {
         location: 'castle',
         giver: 'Castle Captain',
         requirements: { kills: 5 },
-        rewards: { xp: 100, gold: 150, item: 'Knight\'s Blade' },
+        rewards: { xp: 100, gold: 150, item: "Knight's Blade" },
         unlockCondition: { level: 2 },
         completed: false
     },
@@ -1858,7 +1858,7 @@ const quests = {
         location: 'forest',
         giver: 'Elder Druid',
         requirements: { items: { 'Forest Essence': 3 } },
-        rewards: { xp: 200, gold: 100, item: 'Nature\'s Blessing', unlocks: 'swamp' },
+        rewards: { xp: 200, gold: 100, item: "Nature's Blessing", unlocks: 'swamp' },
         unlockCondition: { level: 4 },
         completed: false
     },
@@ -1866,13 +1866,13 @@ const quests = {
     // Village Quests
     merchant_problems: {
         id: 'merchant_problems',
-        name: 'Merchant\'s Problems',
+        name: "Merchant's Problems",
         description: 'Clear the trade routes by defeating bandits near the village',
         type: 'location_clear',
         location: 'village',
         giver: 'Merchant Leader',
         requirements: { battles_in_location: { village: 8 } },
-        rewards: { xp: 150, gold: 300, item: 'Merchant\'s Ring' },
+        rewards: { xp: 150, gold: 300, item: "Merchant's Ring" },
         unlockCondition: { level: 3 },
         completed: false
     },
@@ -1894,13 +1894,13 @@ const quests = {
     // Swamp Quests
     witch_bargain: {
         id: 'witch_bargain',
-        name: 'The Witch\'s Bargain',
+        name: "The Witch's Bargain",
         description: 'Bring the Swamp Witch 5 Rare Crystals from the caverns',
         type: 'collect',
         location: 'swamp',
         giver: 'Swamp Witch',
         requirements: { items: { 'Rare Crystals': 5 } },
-        rewards: { xp: 300, gold: 200, item: 'Witch\'s Potion', skill: 'poison_resistance' },
+        rewards: { xp: 300, gold: 200, item: "Witch's Potion", skill: 'poison_resistance' },
         unlockCondition: { level: 7, questCompleted: 'forest_guardian' },
         completed: false
     },
@@ -1908,7 +1908,7 @@ const quests = {
     // Desert Quests
     desert_nomad: {
         id: 'desert_nomad',
-        name: 'The Desert Nomad\'s Test',
+        name: "The Desert Nomad's Test",
         description: 'Survive 10 battles in the scorching desert',
         type: 'survival',
         location: 'desert',
@@ -2021,9 +2021,11 @@ function getWeatherDescription(state) {
 function tryFindPet(state, currentLocation) {
     // Check if player can find pets in this location
     const availablePets = Object.entries(petTypes).filter(([, petData]) => {
-        return petData.locations.includes(currentLocation) &&
-               state.level >= petData.unlockLevel &&
-               !state.pets.some(pet => pet.type === petData.name);
+        return (
+            petData.locations.includes(currentLocation) &&
+            state.level >= petData.unlockLevel &&
+            !state.pets.some(pet => pet.type === petData.name)
+        );
     });
 
     if (availablePets.length === 0) return null;
@@ -2091,18 +2093,18 @@ function applyPetBonuses(state, bonusType, baseValue) {
         if (!ability || ability.type !== 'passive') return;
 
         switch (ability.effect) {
-        case 'treasure_bonus':
-            if (bonusType === 'treasure') modifier += ability.value;
-            break;
-        case 'xp_bonus':
-            if (bonusType === 'xp') modifier += ability.value;
-            break;
-        case 'crit_chance_increase':
-            if (bonusType === 'crit') modifier += ability.value / 100;
-            break;
-        case 'max_mana_increase':
-            if (bonusType === 'mana') modifier += ability.value;
-            break;
+            case 'treasure_bonus':
+                if (bonusType === 'treasure') modifier += ability.value;
+                break;
+            case 'xp_bonus':
+                if (bonusType === 'xp') modifier += ability.value;
+                break;
+            case 'crit_chance_increase':
+                if (bonusType === 'crit') modifier += ability.value / 100;
+                break;
+            case 'max_mana_increase':
+                if (bonusType === 'mana') modifier += ability.value;
+                break;
         }
     });
 
@@ -2211,9 +2213,10 @@ function craftItem(state, recipeKey) {
     // Add to inventory or equip if it's better
     if (recipe.type === 'weapon' || recipe.type === 'armor') {
         const currentEquipment = state.equipment?.[recipe.type];
-        const isUpgrade = !currentEquipment ||
-                         (recipe.attack && recipe.attack > (currentEquipment.attack || 0)) ||
-                         (recipe.defense && recipe.defense > (currentEquipment.defense || 0));
+        const isUpgrade =
+            !currentEquipment ||
+            (recipe.attack && recipe.attack > (currentEquipment.attack || 0)) ||
+            (recipe.defense && recipe.defense > (currentEquipment.defense || 0));
 
         if (isUpgrade) {
             // Auto-equip if it's better
@@ -2222,7 +2225,8 @@ function craftItem(state, recipeKey) {
 
             // Apply stat bonuses
             if (recipe.attack) state.attack = (state.attack || 15) + (recipe.attack - (currentEquipment?.attack || 0));
-            if (recipe.defense) state.defense = (state.defense || 5) + (recipe.defense - (currentEquipment?.defense || 0));
+            if (recipe.defense)
+                state.defense = (state.defense || 5) + (recipe.defense - (currentEquipment?.defense || 0));
             if (recipe.manaBonus) state.maxMana = (state.maxMana || 50) + recipe.manaBonus;
             if (recipe.hpBonus) {
                 state.maxHp += recipe.hpBonus;
@@ -2264,45 +2268,45 @@ function useCraftedItem(state, itemName) {
     const result = { success: true, message: '' };
 
     switch (item.effect) {
-    case 'heal': {
-        const healAmount = Math.min(item.value, state.maxHp - state.hp);
-        state.hp += healAmount;
-        result.message = `Restored ${healAmount} HP!`;
-        break;
-    }
+        case 'heal': {
+            const healAmount = Math.min(item.value, state.maxHp - state.hp);
+            state.hp += healAmount;
+            result.message = `Restored ${healAmount} HP!`;
+            break;
+        }
 
-    case 'mana': {
-        const manaAmount = Math.min(item.value, state.maxMana - state.mana);
-        state.mana += manaAmount;
-        state.maxMana += 20; // Temporary bonus
-        result.message = `Restored ${manaAmount} mana and increased max mana by 20!`;
-        break;
-    }
+        case 'mana': {
+            const manaAmount = Math.min(item.value, state.maxMana - state.mana);
+            state.mana += manaAmount;
+            state.maxMana += 20; // Temporary bonus
+            result.message = `Restored ${manaAmount} mana and increased max mana by 20!`;
+            break;
+        }
 
-    case 'loyalty':
-        if (state.activePet && state.pets) {
-            const pet = state.pets.find(p => p.id === state.activePet);
-            if (pet) {
-                pet.loyalty = Math.min(pet.maxLoyalty, pet.loyalty + item.value);
-                result.message = `${pet.name} loyalty increased by ${item.value}!`;
+        case 'loyalty':
+            if (state.activePet && state.pets) {
+                const pet = state.pets.find(p => p.id === state.activePet);
+                if (pet) {
+                    pet.loyalty = Math.min(pet.maxLoyalty, pet.loyalty + item.value);
+                    result.message = `${pet.name} loyalty increased by ${item.value}!`;
+                } else {
+                    return { success: false, message: 'No active pet to feed' };
+                }
             } else {
                 return { success: false, message: 'No active pet to feed' };
             }
-        } else {
-            return { success: false, message: 'No active pet to feed' };
-        }
-        break;
+            break;
 
-    case 'buff':
-        // Apply temporary buff (implementation depends on battle system)
-        state.temporaryBuffs = state.temporaryBuffs || {};
-        state.temporaryBuffs.attack = (state.temporaryBuffs.attack || 0) + item.value.attack;
-        state.temporaryBuffs.duration = item.value.duration;
-        result.message = `Attack increased by ${item.value.attack} for ${item.value.duration} battles!`;
-        break;
+        case 'buff':
+            // Apply temporary buff (implementation depends on battle system)
+            state.temporaryBuffs = state.temporaryBuffs || {};
+            state.temporaryBuffs.attack = (state.temporaryBuffs.attack || 0) + item.value.attack;
+            state.temporaryBuffs.duration = item.value.duration;
+            result.message = `Attack increased by ${item.value.attack} for ${item.value.duration} battles!`;
+            break;
 
-    default:
-        return { success: false, message: 'Unknown item effect' };
+        default:
+            return { success: false, message: 'Unknown item effect' };
     }
 
     // Remove item from inventory (consumables are used up)
@@ -2320,9 +2324,9 @@ function tryTriggerRandomEvent(state, currentLocation) {
 
     // Filter events by location and level
     const availableEvents = Object.entries(randomEvents).filter(([, event]) => {
-        return event.locations.includes(currentLocation) &&
-               state.level >= event.minLevel &&
-               Math.random() < event.chance;
+        return (
+            event.locations.includes(currentLocation) && state.level >= event.minLevel && Math.random() < event.chance
+        );
     });
 
     if (availableEvents.length === 0) return null;
@@ -2336,38 +2340,38 @@ function processRandomEvent(state, eventKey, eventData, choice = null) {
     let message = `✨ RANDOM EVENT ✨\n\n${eventData.emoji} ${eventData.name}\n\n${eventData.description}\n\n`;
 
     switch (eventData.type) {
-    case 'choice':
-        if (choice === null) {
-            // Present choices to player
-            message += 'What do you do?\n\n';
-            eventData.choices.forEach((choiceOption, index) => {
-                message += `${index + 1}. ${choiceOption.text}\n`;
-                message += `   ${choiceOption.requirementText}\n\n`;
-            });
-            return { type: 'choice', message, choices: eventData.choices };
-        } else {
-            // Process chosen option
-            const chosenOption = eventData.choices[choice];
-            return processEventChoice(state, chosenOption, message);
-        }
+        case 'choice':
+            if (choice === null) {
+                // Present choices to player
+                message += 'What do you do?\n\n';
+                eventData.choices.forEach((choiceOption, index) => {
+                    message += `${index + 1}. ${choiceOption.text}\n`;
+                    message += `   ${choiceOption.requirementText}\n\n`;
+                });
+                return { type: 'choice', message, choices: eventData.choices };
+            } else {
+                // Process chosen option
+                const chosenOption = eventData.choices[choice];
+                return processEventChoice(state, chosenOption, message);
+            }
 
-    case 'risk_reward':
-        return processRiskRewardEvent(state, eventData, message);
+        case 'risk_reward':
+            return processRiskRewardEvent(state, eventData, message);
 
-    case 'beneficial':
-        return processBeneficialEvent(state, eventData, message);
+        case 'beneficial':
+            return processBeneficialEvent(state, eventData, message);
 
-    case 'teleport':
-        return processTeleportEvent(state, eventData, message);
+        case 'teleport':
+            return processTeleportEvent(state, eventData, message);
 
-    case 'pet_event':
-        return processPetEvent(state, eventData, message);
+        case 'pet_event':
+            return processPetEvent(state, eventData, message);
 
-    case 'special':
-        return processSpecialEvent(state, eventData, message);
+        case 'special':
+            return processSpecialEvent(state, eventData, message);
 
-    default:
-        return { type: 'message', message: message + 'Something strange happens...' };
+        default:
+            return { type: 'message', message: message + 'Something strange happens...' };
     }
 }
 
@@ -2427,40 +2431,41 @@ function applyEventReward(state, reward) {
     let rewardMessage = '';
 
     switch (reward.type) {
-    case 'nothing':
-        rewardMessage = 'You walk away safely.';
-        break;
+        case 'nothing':
+            rewardMessage = 'You walk away safely.';
+            break;
 
-    case 'blessing':
-        if (reward.effect === 'hp_boost') {
-            state.maxHp += reward.value;
-            state.hp += reward.value;
-            rewardMessage = `🙏 The shrine blesses you! +${reward.value} max HP permanently!`;
-        } else if (reward.effect === 'attack_boost') {
-            state.attack += reward.value;
-            rewardMessage = `⚔️ The shrine strengthens you! +${reward.value} attack permanently!`;
+        case 'blessing':
+            if (reward.effect === 'hp_boost') {
+                state.maxHp += reward.value;
+                state.hp += reward.value;
+                rewardMessage = `🙏 The shrine blesses you! +${reward.value} max HP permanently!`;
+            } else if (reward.effect === 'attack_boost') {
+                state.attack += reward.value;
+                rewardMessage = `⚔️ The shrine strengthens you! +${reward.value} attack permanently!`;
+            }
+            break;
+
+        case 'random_equipment': {
+            const rarityItems = equipment.weapons
+                .filter(item => item.rarity === reward.rarity)
+                .concat(equipment.armor.filter(item => item.rarity === reward.rarity));
+            if (rarityItems.length > 0) {
+                const randomItem = rarityItems[Math.floor(Math.random() * rarityItems.length)];
+                state.inventory = state.inventory || [];
+                state.inventory.push(randomItem);
+                rewardMessage = `🎁 The merchant gives you: ${randomItem.name}!`;
+            }
+            break;
         }
-        break;
 
-    case 'random_equipment': {
-        const rarityItems = equipment.weapons.filter(item => item.rarity === reward.rarity)
-            .concat(equipment.armor.filter(item => item.rarity === reward.rarity));
-        if (rarityItems.length > 0) {
-            const randomItem = rarityItems[Math.floor(Math.random() * rarityItems.length)];
-            state.inventory = state.inventory || [];
-            state.inventory.push(randomItem);
-            rewardMessage = `🎁 The merchant gives you: ${randomItem.name}!`;
-        }
-        break;
-    }
+        case 'skill_unlock':
+            // Unlock a random skill (implementation depends on skill system)
+            rewardMessage = '📚 You learn ancient knowledge! (Skill system enhancement needed)';
+            break;
 
-    case 'skill_unlock':
-        // Unlock a random skill (implementation depends on skill system)
-        rewardMessage = '📚 You learn ancient knowledge! (Skill system enhancement needed)';
-        break;
-
-    default:
-        rewardMessage = '✨ Something magical happens!';
+        default:
+            rewardMessage = '✨ Something magical happens!';
     }
 
     return rewardMessage;
@@ -2478,7 +2483,8 @@ function processRiskRewardEvent(state, eventData, baseMessage) {
             if (outcome.result === 'success' && outcome.reward) {
                 if (outcome.reward.gold) {
                     const goldAmount = Array.isArray(outcome.reward.gold)
-                        ? Math.floor(Math.random() * (outcome.reward.gold[1] - outcome.reward.gold[0])) + outcome.reward.gold[0]
+                        ? Math.floor(Math.random() * (outcome.reward.gold[1] - outcome.reward.gold[0])) +
+                          outcome.reward.gold[0]
                         : outcome.reward.gold;
                     state.gold += goldAmount;
                     message += `💰 +${goldAmount} gold!\n`;
@@ -2658,43 +2664,43 @@ function createQuestElement(quest, progress, isComplete, isAvailable) {
     let progressText = '';
     if (progress && !isComplete) {
         switch (quest.type) {
-        case 'kill':
-            progressText = `Progress: ${progress.kills || 0}/${quest.requirements.kills}`;
-            break;
-        case 'collect': {
-            const collectProgress = [];
-            for (const item in quest.requirements.items) {
-                const needed = quest.requirements.items[item];
-                const have = progress[item] || 0;
-                collectProgress.push(`${item}: ${have}/${needed}`);
+            case 'kill':
+                progressText = `Progress: ${progress.kills || 0}/${quest.requirements.kills}`;
+                break;
+            case 'collect': {
+                const collectProgress = [];
+                for (const item in quest.requirements.items) {
+                    const needed = quest.requirements.items[item];
+                    const have = progress[item] || 0;
+                    collectProgress.push(`${item}: ${have}/${needed}`);
+                }
+                progressText = `Progress: ${collectProgress.join(', ')}`;
+                break;
             }
-            progressText = `Progress: ${collectProgress.join(', ')}`;
-            break;
-        }
-        case 'location_clear': {
-            const locationProgress = [];
-            for (const location in quest.requirements.battles_in_location) {
-                const needed = quest.requirements.battles_in_location[location];
-                const have = progress[location] || 0;
-                locationProgress.push(`${location}: ${have}/${needed}`);
+            case 'location_clear': {
+                const locationProgress = [];
+                for (const location in quest.requirements.battles_in_location) {
+                    const needed = quest.requirements.battles_in_location[location];
+                    const have = progress[location] || 0;
+                    locationProgress.push(`${location}: ${have}/${needed}`);
+                }
+                progressText = `Progress: ${locationProgress.join(', ')}`;
+                break;
             }
-            progressText = `Progress: ${locationProgress.join(', ')}`;
-            break;
-        }
-        case 'boss':
-            progressText = progress.boss ? 'Boss defeated!' : 'Boss not defeated yet';
-            break;
-        case 'survival':
-            progressText = `Battles: ${progress.battles || 0}/${quest.requirements[quest.location + '_battles']}`;
-            break;
-        case 'explore': {
-            const explored = progress.explored || 0;
-            const artifacts = progress.artifacts || 0;
-            const ruinsReq = quest.requirements.ruins_explored;
-            const artifactsReq = quest.requirements.artifacts_found;
-            progressText = `Explored: ${explored}/${ruinsReq}, Artifacts: ${artifacts}/${artifactsReq}`;
-            break;
-        }
+            case 'boss':
+                progressText = progress.boss ? 'Boss defeated!' : 'Boss not defeated yet';
+                break;
+            case 'survival':
+                progressText = `Battles: ${progress.battles || 0}/${quest.requirements[quest.location + '_battles']}`;
+                break;
+            case 'explore': {
+                const explored = progress.explored || 0;
+                const artifacts = progress.artifacts || 0;
+                const ruinsReq = quest.requirements.ruins_explored;
+                const artifactsReq = quest.requirements.artifacts_found;
+                progressText = `Explored: ${explored}/${ruinsReq}, Artifacts: ${artifacts}/${artifactsReq}`;
+                break;
+            }
         }
     } else if (isComplete) {
         progressText = '✅ Ready to complete!';
@@ -2753,26 +2759,26 @@ function showQuestDetails() {
                     message += `  ✅ READY TO COMPLETE!\n`;
                 } else {
                     switch (quest.type) {
-                    case 'kill':
-                        message += `  Progress: ${progress.kills || 0}/${quest.requirements.kills} enemies\n`;
-                        break;
-                    case 'collect':
-                        for (const item in quest.requirements.items) {
-                            const needed = quest.requirements.items[item];
-                            const have = progress[item] || 0;
-                            message += `  ${item}: ${have}/${needed}\n`;
-                        }
-                        break;
-                    case 'location_clear':
-                        for (const location in quest.requirements.battles_in_location) {
-                            const needed = quest.requirements.battles_in_location[location];
-                            const have = progress[location] || 0;
-                            message += `  ${location} battles: ${have}/${needed}\n`;
-                        }
-                        break;
-                    case 'boss':
-                        message += `  ${progress.boss ? '✅' : '❌'} Defeat ${quest.requirements.boss_defeat}\n`;
-                        break;
+                        case 'kill':
+                            message += `  Progress: ${progress.kills || 0}/${quest.requirements.kills} enemies\n`;
+                            break;
+                        case 'collect':
+                            for (const item in quest.requirements.items) {
+                                const needed = quest.requirements.items[item];
+                                const have = progress[item] || 0;
+                                message += `  ${item}: ${have}/${needed}\n`;
+                            }
+                            break;
+                        case 'location_clear':
+                            for (const location in quest.requirements.battles_in_location) {
+                                const needed = quest.requirements.battles_in_location[location];
+                                const have = progress[location] || 0;
+                                message += `  ${location} battles: ${have}/${needed}\n`;
+                            }
+                            break;
+                        case 'boss':
+                            message += `  ${progress.boss ? '✅' : '❌'} Defeat ${quest.requirements.boss_defeat}\n`;
+                            break;
                     }
                 }
             }
@@ -2855,6 +2861,9 @@ function updateGameDisplay() {
             petEl.title = 'No pets found yet';
         }
     }
+
+    // Update progress bars
+    updateProgressBars();
 
     // Update battle-specific UI
     updateBattleUI(state);
@@ -3001,7 +3010,7 @@ function explore() {
             dataManager.updateQuestProgress('collect_item', { item: resourceName });
         }
     } else if (encounterChance < 0.6) {
-    // Regular encounters (50% chance)
+        // Regular encounters (50% chance)
         const encounter = selectLocationEncounter(currentLocation, state.level);
 
         message += `A ${encounter.rarity} ${encounter.name} appears! ${encounter.image}`;
@@ -3013,12 +3022,13 @@ function explore() {
         dataManager.saveGameState(state);
         return;
     } else {
-    // Treasure/Resource finding (40% chance)
+        // Treasure/Resource finding (40% chance)
         const treasureType = Math.random();
 
         // Check for pet encounters first (small chance)
         const foundPet = tryFindPet(state, currentLocation);
-        if (foundPet && treasureType < 0.1) { // 10% of treasure time = 4% overall chance
+        if (foundPet && treasureType < 0.1) {
+            // 10% of treasure time = 4% overall chance
             state.pets = state.pets || [];
             state.pets.push(foundPet);
 
@@ -3241,39 +3251,39 @@ function performPlayerAction(actionType, skillKey = null) {
     let manaCost = 0;
 
     switch (actionType) {
-    case 'attack':
-        playerDamage = calculatePlayerDamage(state, enemy, 1.0);
-        battleLog = `⚔️ You attack for ${playerDamage} damage!`;
-        break;
+        case 'attack':
+            playerDamage = calculatePlayerDamage(state, enemy, 1.0);
+            battleLog = `⚔️ You attack for ${playerDamage} damage!`;
+            break;
 
-    case 'heavy_attack':
-        playerDamage = calculatePlayerDamage(state, enemy, 2.0);
-        battleLog = `💥 Heavy Attack! ${playerDamage} damage but you're vulnerable!`;
-        enemy.heavyAttackVulnerability = true;
-        break;
+        case 'heavy_attack':
+            playerDamage = calculatePlayerDamage(state, enemy, 2.0);
+            battleLog = `💥 Heavy Attack! ${playerDamage} damage but you're vulnerable!`;
+            enemy.heavyAttackVulnerability = true;
+            break;
 
-    case 'defend': {
-        const healAmount = Math.floor(state.maxHp * 0.1);
-        state.hp = Math.min(state.maxHp, state.hp + healAmount);
-        state.defendingThisTurn = true;
-        battleLog = `🛡️ You defend and recover ${healAmount} HP!`;
-        break;
-    }
-
-    case 'skill': {
-        const result = useSkill(state, enemy, skillKey);
-        if (!result.success) {
-            document.getElementById('game-message').textContent = result.message;
-            return;
+        case 'defend': {
+            const healAmount = Math.floor(state.maxHp * 0.1);
+            state.hp = Math.min(state.maxHp, state.hp + healAmount);
+            state.defendingThisTurn = true;
+            battleLog = `🛡️ You defend and recover ${healAmount} HP!`;
+            break;
         }
-        playerDamage = result.damage || 0;
-        manaCost = result.manaCost || 0;
-        battleLog = result.message;
 
-        // Track skill usage for quests
-        dataManager.updateQuestProgress('use_skill', { skill: skillKey });
-        break;
-    }
+        case 'skill': {
+            const result = useSkill(state, enemy, skillKey);
+            if (!result.success) {
+                document.getElementById('game-message').textContent = result.message;
+                return;
+            }
+            playerDamage = result.damage || 0;
+            manaCost = result.manaCost || 0;
+            battleLog = result.message;
+
+            // Track skill usage for quests
+            dataManager.updateQuestProgress('use_skill', { skill: skillKey });
+            break;
+        }
     }
 
     // Apply damage to enemy
@@ -3400,36 +3410,36 @@ function applySkillEffect(state, enemy, skill) {
     let message = `✨ ${skill.name}! `;
 
     switch (skill.effect) {
-    case 'magic_damage':
-        damage = Math.floor((state.attack || 15) * 1.5);
-        message += `${damage} magic damage (ignores armor)!`;
-        break;
+        case 'magic_damage':
+            damage = Math.floor((state.attack || 15) * 1.5);
+            message += `${damage} magic damage (ignores armor)!`;
+            break;
 
-    case 'heal_self': {
-        const healAmount = Math.floor(state.maxHp * 0.4);
-        state.hp = Math.min(state.maxHp, state.hp + healAmount);
-        message += `Restored ${healAmount} HP!`;
-        break;
-    }
+        case 'heal_self': {
+            const healAmount = Math.floor(state.maxHp * 0.4);
+            state.hp = Math.min(state.maxHp, state.hp + healAmount);
+            message += `Restored ${healAmount} HP!`;
+            break;
+        }
 
-    case 'guaranteed_crit':
-        damage = calculatePlayerDamage(state, enemy, 1.0) * 2;
-        message += `Critical hit for ${damage} damage!`;
-        break;
+        case 'guaranteed_crit':
+            damage = calculatePlayerDamage(state, enemy, 1.0) * 2;
+            message += `Critical hit for ${damage} damage!`;
+            break;
 
-    case 'backstab_attack':
-        damage = calculatePlayerDamage(state, enemy, 1.8) * 2;
-        message += `Backstab critical for ${damage} damage!`;
-        break;
+        case 'backstab_attack':
+            damage = calculatePlayerDamage(state, enemy, 1.8) * 2;
+            message += `Backstab critical for ${damage} damage!`;
+            break;
 
-    case 'ultimate_attack':
-        damage = calculatePlayerDamage(state, enemy, 3.0);
-        message += `ULTIMATE ATTACK! ${damage} devastating damage!`;
-        break;
+        case 'ultimate_attack':
+            damage = calculatePlayerDamage(state, enemy, 3.0);
+            message += `ULTIMATE ATTACK! ${damage} devastating damage!`;
+            break;
 
-    default:
-        damage = calculatePlayerDamage(state, enemy, 1.2);
-        message += `${damage} enhanced damage!`;
+        default:
+            damage = calculatePlayerDamage(state, enemy, 1.2);
+            message += `${damage} enhanced damage!`;
     }
 
     return {
@@ -3631,24 +3641,24 @@ function applyPassiveSkills(state, bonusType, baseValue) {
         if (!skill || skill.type !== 'passive') return;
 
         switch (skill.effect) {
-        case 'passive_crit_boost':
-            if (bonusType === 'crit_chance') flatBonus += 15;
-            break;
-        case 'passive_damage_reduction':
-            if (bonusType === 'damage_taken') multiplier *= 0.8; // 20% reduction
-            break;
-        case 'passive_treasure_bonus':
-            if (bonusType === 'treasure') multiplier += 0.3;
-            break;
-        case 'passive_resource_bonus':
-            if (bonusType === 'resources') multiplier += 0.25;
-            break;
-        case 'passive_xp_bonus':
-            if (bonusType === 'xp') multiplier += 0.4;
-            break;
-        case 'passive_mana_reduction':
-            if (bonusType === 'mana_cost') multiplier *= 0.75; // 25% reduction
-            break;
+            case 'passive_crit_boost':
+                if (bonusType === 'crit_chance') flatBonus += 15;
+                break;
+            case 'passive_damage_reduction':
+                if (bonusType === 'damage_taken') multiplier *= 0.8; // 20% reduction
+                break;
+            case 'passive_treasure_bonus':
+                if (bonusType === 'treasure') multiplier += 0.3;
+                break;
+            case 'passive_resource_bonus':
+                if (bonusType === 'resources') multiplier += 0.25;
+                break;
+            case 'passive_xp_bonus':
+                if (bonusType === 'xp') multiplier += 0.4;
+                break;
+            case 'passive_mana_reduction':
+                if (bonusType === 'mana_cost') multiplier *= 0.75; // 25% reduction
+                break;
         }
     });
 
@@ -3673,27 +3683,27 @@ function getPassiveSkillBonuses(state) {
         if (!skill || skill.type !== 'passive') return;
 
         switch (skill.effect) {
-        case 'passive_crit_boost':
-            bonuses.critChance += 15;
-            break;
-        case 'passive_damage_reduction':
-            bonuses.damageReduction += 20;
-            break;
-        case 'passive_treasure_bonus':
-            bonuses.treasureBonus += 30;
-            break;
-        case 'passive_resource_bonus':
-            bonuses.resourceBonus += 25;
-            break;
-        case 'passive_xp_bonus':
-            bonuses.xpBonus += 40;
-            break;
-        case 'passive_mana_reduction':
-            bonuses.manaCostReduction += 25;
-            break;
-        case 'passive_reflexes':
-            bonuses.dodgeBonus += 20;
-            break;
+            case 'passive_crit_boost':
+                bonuses.critChance += 15;
+                break;
+            case 'passive_damage_reduction':
+                bonuses.damageReduction += 20;
+                break;
+            case 'passive_treasure_bonus':
+                bonuses.treasureBonus += 30;
+                break;
+            case 'passive_resource_bonus':
+                bonuses.resourceBonus += 25;
+                break;
+            case 'passive_xp_bonus':
+                bonuses.xpBonus += 40;
+                break;
+            case 'passive_mana_reduction':
+                bonuses.manaCostReduction += 25;
+                break;
+            case 'passive_reflexes':
+                bonuses.dodgeBonus += 20;
+                break;
         }
     });
 
@@ -3733,24 +3743,24 @@ function checkAchievements(state) {
         let unlocked = false;
 
         switch (achievement.id) {
-        case 'first_kill':
-            unlocked = state.explorationCount >= 1;
-            break;
-        case 'explorer':
-            unlocked = state.explorationCount >= 10;
-            break;
-        case 'treasure_hunter':
-            unlocked = state.gold >= 500;
-            break;
-        case 'level_master':
-            unlocked = state.level >= 10;
-            break;
-        case 'dragon_slayer':
-            unlocked = state.bossesDefeated >= 1;
-            break;
-        case 'boss_hunter':
-            unlocked = state.bossesDefeated >= 5;
-            break;
+            case 'first_kill':
+                unlocked = state.explorationCount >= 1;
+                break;
+            case 'explorer':
+                unlocked = state.explorationCount >= 10;
+                break;
+            case 'treasure_hunter':
+                unlocked = state.gold >= 500;
+                break;
+            case 'level_master':
+                unlocked = state.level >= 10;
+                break;
+            case 'dragon_slayer':
+                unlocked = state.bossesDefeated >= 1;
+                break;
+            case 'boss_hunter':
+                unlocked = state.bossesDefeated >= 5;
+                break;
         }
 
         if (unlocked) {
@@ -3807,7 +3817,7 @@ function shop() {
         shopMessage += `${index + 6}. ${armor.name} - ${armor.cost} Gold (+${armor.defense} Defense)\n`;
     });
 
-    shopMessage += '\nEnter number to buy, \'i\' for inventory, or any other key to leave.';
+    shopMessage += "\nEnter number to buy, 'i' for inventory, or any other key to leave.";
 
     const choice = prompt(shopMessage);
 
@@ -3892,7 +3902,7 @@ function showInventory(state) {
         }
     });
 
-    inventoryMessage += '\nYour inventory contains items you\'ve found during your adventures!';
+    inventoryMessage += "\nYour inventory contains items you've found during your adventures!";
 
     document.getElementById('game-message').textContent = inventoryMessage;
     document.getElementById('game-image').textContent = '🎒';
@@ -4445,6 +4455,108 @@ async function installPWA() {
 
     deferredPrompt = null;
     hideInstallButton();
+}
+
+// Enhanced Game Modal System
+function showGameModal(title, content, data = null, onConfirm = null) {
+    const modal = document.getElementById('game-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+    const closeBtn = document.getElementById('modal-close');
+
+    modalTitle.textContent = title;
+    modalBody.innerHTML = content;
+    modal.style.display = 'block';
+
+    // Add click handlers to shop items if this is a shop modal
+    if (content.includes('shop-interface')) {
+        setupShopItemHandlers();
+    }
+
+    // Close handlers
+    const closeModal = () => {
+        modal.style.display = 'none';
+        document.removeEventListener('keydown', handleModalKeydown);
+    };
+
+    const handleModalKeydown = e => {
+        if (e.key === 'Escape') closeModal();
+    };
+
+    // Event listeners
+    closeBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+
+    confirmBtn.onclick = () => {
+        if (onConfirm) {
+            const selectedElement = modalBody.querySelector('.shop-item.selected');
+            onConfirm(true, selectedElement);
+        }
+        closeModal();
+    };
+
+    // Close on background click
+    modal.onclick = e => {
+        if (e.target === modal) closeModal();
+    };
+
+    // Keyboard navigation
+    document.addEventListener('keydown', handleModalKeydown);
+}
+
+function setupShopItemHandlers() {
+    const shopItems = document.querySelectorAll('.shop-item');
+    shopItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove previous selection
+            shopItems.forEach(i => i.classList.remove('selected'));
+            // Add selection to clicked item
+            item.classList.add('selected');
+
+            // Enable confirm button
+            document.getElementById('modal-confirm').disabled = false;
+        });
+    });
+}
+
+function showLoadingOverlay(text = 'Processing...') {
+    const loading = document.getElementById('game-loading');
+    const loadingText = document.querySelector('.loading-text');
+    loadingText.textContent = text;
+    loading.style.display = 'flex';
+}
+
+function hideLoadingOverlay() {
+    const loading = document.getElementById('game-loading');
+    loading.style.display = 'none';
+}
+
+// Progress Bar Updates
+function updateProgressBars() {
+    const state = dataManager.getGameState();
+
+    // Health bar
+    const healthFill = document.getElementById('health-bar-fill');
+    const healthPercent = (state.hp / state.maxHp) * 100;
+    if (healthFill) {
+        healthFill.style.width = `${healthPercent}%`;
+    }
+
+    // XP bar
+    const xpFill = document.getElementById('xp-bar-fill');
+    const xpPercent = (state.xp / state.xpNeeded) * 100;
+    if (xpFill) {
+        xpFill.style.width = `${xpPercent}%`;
+    }
+
+    // Mana bar
+    const manaFill = document.getElementById('mana-bar-fill');
+    const manaPercent = (state.mana / state.maxMana) * 100;
+    if (manaFill) {
+        manaFill.style.width = `${manaPercent}%`;
+    }
 }
 
 // Enhanced touch gesture support

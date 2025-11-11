@@ -107,57 +107,103 @@
             <h2>🗡️ Mini Adventure Quest 🛡️</h2>
             <div class="game-container">
                 <div class="game-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Hero:</span>
-                        <span id="hero-name">Brave Adventurer</span>
+                    <!-- Primary Stats with Visual Indicators -->
+                    <div class="stat-group primary-stats">
+                        <div class="stat-item hero-identity">
+                            <div class="stat-icon">👤</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Hero</span>
+                                <span id="hero-name" class="stat-value">Brave Adventurer</span>
+                                <div class="stat-sublabel">
+                                    <span id="hero-class" class="hero-class">🗡️ Warrior</span>
+                                    <span class="level-badge">Lv. <span id="hero-level">1</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item health-stat">
+                            <div class="stat-icon">❤️</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Health</span>
+                                <div class="stat-bar-container">
+                                    <div class="stat-bar health-bar">
+                                        <div id="health-bar-fill" class="stat-bar-fill"></div>
+                                    </div>
+                                    <span class="stat-values">
+                                        <span id="hero-hp">100</span>/<span id="hero-max-hp">100</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item xp-stat">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Experience</span>
+                                <div class="stat-bar-container">
+                                    <div class="stat-bar xp-bar">
+                                        <div id="xp-bar-fill" class="stat-bar-fill"></div>
+                                    </div>
+                                    <span class="stat-values">
+                                        <span id="hero-xp">0</span>/<span id="hero-xp-needed">100</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item mana-stat">
+                            <div class="stat-icon">🔮</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Mana</span>
+                                <div class="stat-bar-container">
+                                    <div class="stat-bar mana-bar">
+                                        <div id="mana-bar-fill" class="stat-bar-fill"></div>
+                                    </div>
+                                    <span class="stat-values">
+                                        <span id="hero-mana">50</span>/<span id="hero-max-mana">50</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Level:</span>
-                        <span id="hero-level">1</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">XP:</span>
-                        <span id="hero-xp">0</span>/<span id="hero-xp-needed">100</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">HP:</span>
-                        <span id="hero-hp">100</span>/<span id="hero-max-hp">100</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Gold:</span>
-                        <span id="hero-gold">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Attack:</span>
-                        <span id="hero-attack">15</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Defense:</span>
-                        <span id="hero-defense">5</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Weapon:</span>
-                        <span id="hero-weapon">Iron Sword</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Armor:</span>
-                        <span id="hero-armor">Leather Armor</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Mana:</span>
-                        <span id="hero-mana">50</span>/<span id="hero-max-mana">50</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Weather:</span>
-                        <span id="current-weather">☀️ Clear Skies</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Pet:</span>
-                        <span id="active-pet">None</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Class:</span>
-                        <span id="hero-class">🗡️ Warrior</span>
+
+                    <!-- Secondary Stats -->
+                    <div class="stat-group secondary-stats">
+                        <div class="stat-item compact">
+                            <span class="stat-icon">💰</span>
+                            <span class="stat-label">Gold:</span>
+                            <span id="hero-gold" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item compact">
+                            <span class="stat-icon">⚔️</span>
+                            <span class="stat-label">Attack:</span>
+                            <span id="hero-attack" class="stat-value">15</span>
+                        </div>
+                        <div class="stat-item compact">
+                            <span class="stat-icon">🛡️</span>
+                            <span class="stat-label">Defense:</span>
+                            <span id="hero-defense" class="stat-value">5</span>
+                        </div>
+                        <div class="stat-item compact equipment">
+                            <span class="stat-icon">🗡️</span>
+                            <span class="stat-label">Weapon:</span>
+                            <span id="hero-weapon" class="stat-value">Iron Sword</span>
+                        </div>
+                        <div class="stat-item compact equipment">
+                            <span class="stat-icon">👕</span>
+                            <span class="stat-label">Armor:</span>
+                            <span id="hero-armor" class="stat-value">Leather Armor</span>
+                        </div>
+                        <div class="stat-item compact">
+                            <span class="stat-icon">🌤️</span>
+                            <span class="stat-label">Weather:</span>
+                            <span id="current-weather" class="stat-value">☀️ Clear</span>
+                        </div>
+                        <div class="stat-item compact">
+                            <span class="stat-icon">🐾</span>
+                            <span class="stat-label">Pet:</span>
+                            <span id="active-pet" class="stat-value">None</span>
+                        </div>
                     </div>
                 </div>
 
@@ -209,17 +255,64 @@
                 </div>
 
                 <div class="game-actions">
-                    <button class="game-btn" id="explore-btn">🗺️ Explore</button>
-                    <button class="game-btn" id="rest-btn">😴 Rest</button>
-                    <button class="game-btn" id="shop-btn">🏪 Shop</button>
-                    <button class="game-btn" id="inventory-btn">🎒 Inventory</button>
-                    <button class="game-btn" id="stats-btn">📊 Stats</button>
-                    <button class="game-btn" id="pets-btn">🐾 Pets</button>
-                    <button class="game-btn" id="crafting-btn">🔨 Crafting</button>
-                    <button class="game-btn" id="skills-btn-main">✨ Skills</button>
-                    <button class="game-btn" id="choose-class-btn">🎭 Choose Class</button>
-                    <button class="game-btn" id="quests-btn">🎯 Quests</button>
-                    <button class="game-btn" id="reset-game-btn">🔄 New Game</button>
+                    <!-- Primary Actions -->
+                    <div class="action-group primary-actions">
+                        <button class="game-btn primary" id="explore-btn">
+                            <span class="btn-icon">🗺️</span>
+                            <span class="btn-text">Explore</span>
+                            <span class="btn-hint">Discover new areas</span>
+                        </button>
+                        <button class="game-btn primary" id="rest-btn">
+                            <span class="btn-icon">😴</span>
+                            <span class="btn-text">Rest</span>
+                            <span class="btn-hint">Restore health</span>
+                        </button>
+                        <button class="game-btn primary" id="shop-btn">
+                            <span class="btn-icon">🏪</span>
+                            <span class="btn-text">Shop</span>
+                            <span class="btn-hint">Buy & sell items</span>
+                        </button>
+                    </div>
+
+                    <!-- Management Actions -->
+                    <div class="action-group management-actions">
+                        <button class="game-btn secondary" id="inventory-btn">
+                            <span class="btn-icon">🎒</span>
+                            <span class="btn-text">Inventory</span>
+                        </button>
+                        <button class="game-btn secondary" id="stats-btn">
+                            <span class="btn-icon">📊</span>
+                            <span class="btn-text">Stats</span>
+                        </button>
+                        <button class="game-btn secondary" id="pets-btn">
+                            <span class="btn-icon">🐾</span>
+                            <span class="btn-text">Pets</span>
+                        </button>
+                        <button class="game-btn secondary" id="crafting-btn">
+                            <span class="btn-icon">🔨</span>
+                            <span class="btn-text">Crafting</span>
+                        </button>
+                        <button class="game-btn secondary" id="skills-btn-main">
+                            <span class="btn-icon">✨</span>
+                            <span class="btn-text">Skills</span>
+                        </button>
+                        <button class="game-btn secondary" id="quests-btn">
+                            <span class="btn-icon">🎯</span>
+                            <span class="btn-text">Quests</span>
+                        </button>
+                    </div>
+
+                    <!-- Character Actions -->
+                    <div class="action-group character-actions">
+                        <button class="game-btn tertiary" id="choose-class-btn">
+                            <span class="btn-icon">�</span>
+                            <span class="btn-text">Choose Class</span>
+                        </button>
+                        <button class="game-btn danger" id="reset-game-btn">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">New Game</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Battle Actions (hidden by default) -->
@@ -229,6 +322,29 @@
                     <button class="battle-btn" id="defend-btn">🛡️ Defend</button>
                     <button class="battle-btn" id="skills-btn">✨ Skills</button>
                 </div>
+            </div>
+
+            <!-- Custom Modal Dialogs -->
+            <div id="game-modal" class="game-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modal-title">Action</h3>
+                        <button class="modal-close" id="modal-close">×</button>
+                    </div>
+                    <div id="modal-body" class="modal-body">
+                        <!-- Modal content will be dynamically populated -->
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="modal-cancel">Cancel</button>
+                        <button class="btn-primary" id="modal-confirm">Confirm</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="game-loading" class="game-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Processing...</div>
             </div>
         </section>
 
