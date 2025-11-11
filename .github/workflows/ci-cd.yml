@@ -128,7 +128,7 @@ jobs:
         run: npm ci
 
       - name: "Install Playwright Browsers"
-        run: npx playwright install chromium --with-deps
+        run: npx playwright install chromium webkit --with-deps
 
       - name: "Start Development Server"
         run: |
