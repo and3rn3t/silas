@@ -41,26 +41,31 @@ jobs:
   e2e-smoke:
     name: "E2E Smoke Tests"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: "Checkout Code"
         uses: actions/checkout@v4
-        
+
       - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
-          
+
       - name: "Install Dependencies"
         run: npm ci
-        
+
       - name: "Install Playwright Browsers"
         run: npx playwright install chromium --with-deps
-        
+
+      - name: "Start Development Server"
+        run: |
+          npm run serve &
+          npx wait-on http://localhost:3000 --timeout 30000
+
       - name: "Run Smoke Tests"
         run: npx playwright test navigation.spec.js --project=chromium
-        
+
       - name: "Upload Smoke Test Report"
         uses: actions/upload-artifact@v4
         if: always()
@@ -72,26 +77,31 @@ jobs:
   e2e-desktop:
     name: "E2E Tests - Desktop Browsers"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: "Checkout Code"
         uses: actions/checkout@v4
-        
+
       - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
-          
+
       - name: "Install Dependencies"
         run: npm ci
-        
+
       - name: "Install Playwright Browsers"
         run: npx playwright install chromium firefox webkit --with-deps
-        
+
+      - name: "Start Development Server"
+        run: |
+          npm run serve &
+          npx wait-on http://localhost:3000 --timeout 30000
+
       - name: "Run Desktop E2E Tests"
         run: npx playwright test --project=chromium --project=firefox --project=webkit
-        
+
       - name: "Upload Desktop E2E Report"
         uses: actions/upload-artifact@v4
         if: always()
@@ -103,26 +113,31 @@ jobs:
   e2e-mobile:
     name: "E2E Tests - Mobile Browsers"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: "Checkout Code"
         uses: actions/checkout@v4
-        
+
       - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
-          
+
       - name: "Install Dependencies"
         run: npm ci
-        
+
       - name: "Install Playwright Browsers"
         run: npx playwright install chromium --with-deps
-        
+
+      - name: "Start Development Server"
+        run: |
+          npm run serve &
+          npx wait-on http://localhost:3000 --timeout 30000
+
       - name: "Run Mobile E2E Tests"
         run: npx playwright test --project="Mobile Chrome" --project="Mobile Safari"
-        
+
       - name: "Upload Mobile E2E Report"
         uses: actions/upload-artifact@v4
         if: always()
@@ -238,18 +253,17 @@ jobs:
 
       - name: "Install Lighthouse CI"
         run: |
-          echo "Installing Lighthouse CI (latest version)..."
-          npm install -g @lhci/cli@latest || echo "⚠️ Failed to install Lighthouse CI"
+          echo "Lighthouse CI is already installed via package.json"
 
       - name: "Start Test Server"
         run: |
           npm run serve &
-          sleep 5
+          npx wait-on http://localhost:3000 --timeout 30000
 
       - name: "Run Lighthouse CI"
         run: |
           echo "Running Lighthouse performance tests..."
-          lhci autorun --upload.target=temporary-public-storage || echo "⚠️ Lighthouse tests failed but continuing"
+          npx lhci autorun --upload.target=temporary-public-storage
 
   notify:
     name: "Notifications"

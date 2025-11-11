@@ -12,7 +12,7 @@
   },
   "rules": {
     "indent": ["warn", 4],
-    "linebreak-style": ["error", "unix"],
+    "linebreak-style": "off",
     "quotes": ["warn", "single", { "allowTemplateLiterals": true }],
     "semi": ["error", "always"],
     "no-unused-vars": ["warn"],
