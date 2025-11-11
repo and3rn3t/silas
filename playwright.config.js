@@ -11,10 +11,10 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
     retries: process.env.CI ? 2 : 0,
-    /* Use more workers on CI for faster execution */
-    workers: process.env.CI ? '50%' : undefined,
-    /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: 'html',
+    /* Use more workers for faster local execution */
+    workers: process.env.CI ? '50%' : '75%',
+    /* Reporter to use - line for local, html for CI */
+    reporter: process.env.CI ? 'html' : 'line',
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -29,9 +29,14 @@ export default defineConfig({
         /* Video recording - optimize for CI performance */
         video: process.env.CI ? 'retain-on-failure' : 'off',
 
-        /* Increase test timeouts for CI stability */
-        actionTimeout: process.env.CI ? 15000 : 10000,
-        navigationTimeout: process.env.CI ? 15000 : 10000
+        /* Faster timeouts for local development */
+        actionTimeout: process.env.CI ? 15000 : 5000,
+        navigationTimeout: process.env.CI ? 15000 : 5000,
+
+        /* Disable animations for faster testing */
+        launchOptions: {
+            slowMo: 0
+        }
     },
 
     /* Configure projects for major browsers */
@@ -83,6 +88,8 @@ export default defineConfig({
         command: 'npm run serve',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
-        timeout: 120000
+        timeout: process.env.CI ? 120000 : 30000,
+        stdout: 'ignore',
+        stderr: 'pipe'
     }
 });

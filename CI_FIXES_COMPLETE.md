@@ -6,22 +6,23 @@
 
 #### 1. **E2E Tests Failing - No Development Server**
 
-**Problem:** E2E tests were running without starting a local development server first.
-**Solution:** Added server startup and wait-on dependency to all E2E test jobs.
+**Problem:** E2E tests were running without starting a local development server
+first. **Solution:** Added server startup and wait-on dependency to all E2E test
+jobs.
 
 ```yaml
-- name: "Start Development Server"
+- name: 'Start Development Server'
   run: |
-    npm run serve &
-    npx wait-on http://localhost:3000 --timeout 30000
+      npm run serve &
+      npx wait-on http://localhost:3000 --timeout 30000
 ```
 
 **Impact:** All E2E tests now have a running server to test against.
 
 #### 2. **Missing wait-on Dependency**
 
-**Problem:** CI workflow used `npx wait-on` but dependency wasn't in package.json.
-**Solution:** Added `wait-on@^8.0.1` to devDependencies.
+**Problem:** CI workflow used `npx wait-on` but dependency wasn't in
+package.json. **Solution:** Added `wait-on@^8.0.1` to devDependencies.
 
 #### 3. **Test Navigation Mismatches**
 
@@ -53,7 +54,8 @@ await page.click('[data-section="admin"]');
 #### 6. **Security Audit Improvements**
 
 **Problem:** Silent failures with `|| echo` patterns masked real issues.
-**Solution:** Let security audits fail properly while maintaining build flexibility.
+**Solution:** Let security audits fail properly while maintaining build
+flexibility.
 
 #### 7. **Enhanced Test Scripts**
 
@@ -91,7 +93,7 @@ await page.click('[data-section="admin"]');
 
 ```yaml
 # Missing server startup
-- name: "Run Smoke Tests"
+- name: 'Run Smoke Tests'
   run: npx playwright test navigation.spec.js --project=chromium
 ```
 
@@ -99,12 +101,12 @@ await page.click('[data-section="admin"]');
 
 ```yaml
 # Proper server startup with wait
-- name: "Start Development Server"
+- name: 'Start Development Server'
   run: |
-    npm run serve &
-    npx wait-on http://localhost:3000 --timeout 30000
+      npm run serve &
+      npx wait-on http://localhost:3000 --timeout 30000
 
-- name: "Run Smoke Tests"
+- name: 'Run Smoke Tests'
   run: npx playwright test navigation.spec.js --project=chromium
 ```
 
@@ -113,7 +115,7 @@ await page.click('[data-section="admin"]');
 ### ✅ Local Testing Confirmed
 
 1. **Unit Tests**: `npm test` - ✅ Passing
-2. **Linting**: `npm run lint` - ✅ Passing  
+2. **Linting**: `npm run lint` - ✅ Passing
 3. **E2E Tests**: `npm run test:e2e` - ✅ Passing
 4. **Full Test Suite**: All tasks complete successfully
 
@@ -130,7 +132,9 @@ await page.click('[data-section="admin"]');
 
 ## Root Cause Analysis
 
-The primary issue was **missing development server setup** in E2E test jobs. While tests worked locally (where developers manually start servers), CI environment had no running server for tests to connect to.
+The primary issue was **missing development server setup** in E2E test jobs.
+While tests worked locally (where developers manually start servers), CI
+environment had no running server for tests to connect to.
 
 Secondary issues included:
 
@@ -140,7 +144,8 @@ Secondary issues included:
 
 ## Prevention Measures
 
-1. **Local CI Simulation**: Added `test:e2e:ci` script to replicate CI behavior locally
+1. **Local CI Simulation**: Added `test:e2e:ci` script to replicate CI behavior
+   locally
 2. **Cross-Platform Rules**: Removed OS-specific linting requirements
 3. **Dependency Completeness**: Ensured all CI-used packages are in package.json
 4. **Test Data Consistency**: Aligned test selectors with actual DOM structure
@@ -155,4 +160,5 @@ All CI jobs should now pass successfully, enabling:
 - ✅ Quality gates for code changes
 - ✅ Performance monitoring via Lighthouse
 
-The CI/CD pipeline is now robust, reliable, and ready for continuous integration! 🚀
+The CI/CD pipeline is now robust, reliable, and ready for continuous
+integration! 🚀
