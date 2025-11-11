@@ -139,7 +139,16 @@ class DataManager {
                 daily_kills: 0,
                 daily_resources: 0,
                 daily_skills: 0
-            }
+            },
+            // Weather System
+            currentWeather: 'clear',
+            weatherChangeTimer: 0,
+            weatherDuration: 5, // Weather changes every 5 explorations
+
+            // Pet System
+            pets: [], // Array of owned pets
+            activePet: null, // Currently active pet (only one at a time)
+            petEncounters: 0 // Track encounters for pet finding
         };
         this.saveGameState(initialState);
     }
@@ -604,7 +613,7 @@ const gameScenarios = {
         image: '🏰',
         level: 1,
         specialEncounters: ['Royal Guard', 'Court Mage', 'Castle Knight'],
-        resources: ['Honor Tokens', 'Royal Seal', 'Knight\'s Blessing'],
+        resources: ['Honor Tokens', 'Royal Seal', 'Knight\'s Blessing', 'Iron Ore'],
         questGiver: true,
         description: 'The seat of power in the realm. Knights and nobles gather here.',
         unlockCondition: null // Always available
@@ -648,7 +657,7 @@ const gameScenarios = {
         image: '🏘️',
         level: 1,
         specialEncounters: ['Village Chief', 'Master Blacksmith', 'Traveling Merchant'],
-        resources: ['Trade Goods', 'Crafting Materials', 'Local Currency'],
+        resources: ['Trade Goods', 'Crafting Materials', 'Local Currency', 'Pure Water', 'Rope'],
         questGiver: true,
         description: 'A thriving trade hub where adventurers resupply.',
         unlockCondition: null // Always available
@@ -681,10 +690,654 @@ const gameScenarios = {
         image: '🏛️',
         level: 5,
         specialEncounters: ['Ancient Guardian', 'Lost Spirit', 'Ruin Keeper'],
-        resources: ['Ancient Artifacts', 'Runic Stones', 'Lost Knowledge'],
+        resources: ['Ancient Artifacts', 'Runic Stones', 'Lost Knowledge', 'Compass'],
         questGiver: true,
         description: 'Mysterious ruins of an ancient magical empire.',
         unlockCondition: { level: 12, questCompleted: 'dragon_peak_trial' }
+    }
+};
+
+// Weather System
+const weatherTypes = {
+    clear: {
+        name: 'Clear Skies',
+        emoji: '☀️',
+        description: 'Perfect weather for adventure!',
+        effects: {
+            treasureBonus: 1.3,        // 30% more treasure
+            resourceBonus: 1.0,        // Normal resources
+            enemyDangerMod: 1.0,       // Normal enemy strength
+            xpBonus: 1.1,              // 10% XP bonus
+            encounterRateChange: 0     // Normal encounter rates
+        },
+        rarity: 0.25  // 25% chance
+    },
+    cloudy: {
+        name: 'Cloudy',
+        emoji: '☁️',
+        description: 'Overcast skies create a neutral atmosphere.',
+        effects: {
+            treasureBonus: 1.0,        // Normal treasure
+            resourceBonus: 1.0,        // Normal resources
+            enemyDangerMod: 1.0,       // Normal enemy strength
+            xpBonus: 1.0,              // Normal XP
+            encounterRateChange: 0     // Normal encounter rates
+        },
+        rarity: 0.3   // 30% chance
+    },
+    rain: {
+        name: 'Light Rain',
+        emoji: '🌧️',
+        description: 'Gentle rain nourishes the land.',
+        effects: {
+            treasureBonus: 0.8,        // 20% less treasure (hidden by rain)
+            resourceBonus: 1.5,        // 50% more resources (plants flourish)
+            enemyDangerMod: 0.9,       // Enemies 10% weaker (soggy)
+            xpBonus: 1,              // Normal XP
+            encounterRateChange: -0.1  // 10% fewer encounters
+        },
+        rarity: 0.2   // 20% chance
+    },
+    storm: {
+        name: 'Thunderstorm',
+        emoji: '⛈️',
+        description: 'Lightning crackles across dark clouds!',
+        effects: {
+            treasureBonus: 0.7,        // 30% less treasure
+            resourceBonus: 0.8,        // 20% fewer resources
+            enemyDangerMod: 1.4,       // Enemies 40% stronger (enraged)
+            xpBonus: 1.3,              // 30% more XP (dangerous = rewarding)
+            encounterRateChange: 0.15  // 15% more encounters
+        },
+        rarity: 0.1   // 10% chance
+    },
+    fog: {
+        name: 'Thick Fog',
+        emoji: '🌫️',
+        description: 'Dense fog obscures your vision.',
+        effects: {
+            treasureBonus: 1.2,        // 20% more treasure (hidden caches visible)
+            resourceBonus: 0.7,        // 30% fewer resources (hard to see)
+            enemyDangerMod: 1.1,       // Enemies 10% stronger (ambush advantage)
+            xpBonus: 1,              // Normal XP
+            encounterRateChange: 0.1   // 10% more encounters (surprise attacks)
+        },
+        rarity: 0.1   // 10% chance
+    },
+    snow: {
+        name: 'Light Snow',
+        emoji: '❄️',
+        description: 'Gentle snowflakes drift from the sky.',
+        effects: {
+            treasureBonus: 0.9,        // 10% less treasure
+            resourceBonus: 1.1,        // 10% more resources (preserved by cold)
+            enemyDangerMod: 0.8,       // Enemies 20% weaker (sluggish from cold)
+            xpBonus: 1.1,              // 10% more XP
+            encounterRateChange: -0.05 // 5% fewer encounters
+        },
+        rarity: 0.05  // 5% chance
+    }
+};
+
+// Pet/Companion System
+const petTypes = {
+    wolf_pup: {
+        name: 'Wolf Pup',
+        emoji: '🐺',
+        rarity: 'common',
+        description: 'A loyal young wolf that aids in combat',
+        baseStats: {
+            attack: 3,
+            defense: 2,
+            health: 15,
+            loyalty: 50
+        },
+        abilities: ['pack_hunt', 'howl'],
+        unlockLevel: 1,
+        findChance: 0.08, // 8% chance when exploring forest
+        locations: ['forest', 'mountain'],
+        growthRate: 1.2,
+        maxLevel: 10
+    },
+    crystal_sprite: {
+        name: 'Crystal Sprite',
+        emoji: '🧚‍♀️',
+        rarity: 'uncommon',
+        description: 'A magical fairy that enhances mana and provides healing',
+        baseStats: {
+            attack: 1,
+            defense: 1,
+            health: 8,
+            loyalty: 60
+        },
+        abilities: ['mana_boost', 'healing_light'],
+        unlockLevel: 3,
+        findChance: 0.05, // 5% chance in caves
+        locations: ['cave', 'ruins'],
+        growthRate: 1.3,
+        maxLevel: 12
+    },
+    shadow_cat: {
+        name: 'Shadow Cat',
+        emoji: '🐈‍⬛',
+        rarity: 'rare',
+        description: 'A mysterious feline that increases stealth and critical hits',
+        baseStats: {
+            attack: 4,
+            defense: 3,
+            health: 12,
+            loyalty: 40
+        },
+        abilities: ['stealth_strike', 'lucky_charm'],
+        unlockLevel: 5,
+        findChance: 0.03, // 3% chance in swamps
+        locations: ['swamp', 'ruins'],
+        growthRate: 1.4,
+        maxLevel: 15
+    },
+    fire_salamander: {
+        name: 'Fire Salamander',
+        emoji: '🦎',
+        rarity: 'rare',
+        description: 'A flame-breathing lizard that boosts fire damage',
+        baseStats: {
+            attack: 6,
+            defense: 4,
+            health: 20,
+            loyalty: 35
+        },
+        abilities: ['fire_breath', 'burn_aura'],
+        unlockLevel: 7,
+        findChance: 0.04, // 4% chance in desert/mountain
+        locations: ['desert', 'mountain'],
+        growthRate: 1.5,
+        maxLevel: 18
+    },
+    ancient_turtle: {
+        name: 'Ancient Turtle',
+        emoji: '🐢',
+        rarity: 'legendary',
+        description: 'A wise ancient creature that provides massive defense bonuses',
+        baseStats: {
+            attack: 2,
+            defense: 8,
+            health: 40,
+            loyalty: 80
+        },
+        abilities: ['shell_guard', 'wisdom_aura', 'regeneration'],
+        unlockLevel: 10,
+        findChance: 0.01, // 1% chance in ruins
+        locations: ['ruins'],
+        growthRate: 1.8,
+        maxLevel: 25
+    }
+};
+
+const petAbilities = {
+    pack_hunt: {
+        name: 'Pack Hunt',
+        description: 'Increases damage by 15% when both player and pet attack',
+        type: 'combat',
+        effect: 'damage_boost',
+        value: 0.15
+    },
+    howl: {
+        name: 'Intimidating Howl',
+        description: 'Reduces enemy attack by 10% for 3 turns',
+        type: 'debuff',
+        effect: 'enemy_attack_reduce',
+        value: 0.1,
+        duration: 3
+    },
+    mana_boost: {
+        name: 'Mana Boost',
+        description: 'Increases max mana by 20%',
+        type: 'passive',
+        effect: 'max_mana_increase',
+        value: 0.2
+    },
+    healing_light: {
+        name: 'Healing Light',
+        description: 'Restores 5 HP after each battle',
+        type: 'passive',
+        effect: 'post_battle_heal',
+        value: 5
+    },
+    stealth_strike: {
+        name: 'Stealth Strike',
+        description: 'Increases critical hit chance by 15%',
+        type: 'passive',
+        effect: 'crit_chance_increase',
+        value: 15
+    },
+    lucky_charm: {
+        name: 'Lucky Charm',
+        description: 'Increases treasure find rate by 20%',
+        type: 'passive',
+        effect: 'treasure_bonus',
+        value: 0.2
+    },
+    fire_breath: {
+        name: 'Fire Breath',
+        description: 'Deals fire damage to enemies (25% chance per turn)',
+        type: 'combat',
+        effect: 'fire_damage',
+        value: 8,
+        chance: 0.25
+    },
+    burn_aura: {
+        name: 'Burn Aura',
+        description: 'Enemies take 2 damage per turn from burns',
+        type: 'aura',
+        effect: 'burn_damage',
+        value: 2
+    },
+    shell_guard: {
+        name: 'Shell Guard',
+        description: 'Blocks 30% of incoming damage',
+        type: 'passive',
+        effect: 'damage_reduction',
+        value: 0.3
+    },
+    wisdom_aura: {
+        name: 'Wisdom Aura',
+        description: 'Increases XP gain by 25%',
+        type: 'passive',
+        effect: 'xp_bonus',
+        value: 0.25
+    },
+    regeneration: {
+        name: 'Regeneration',
+        description: 'Restores 10 HP per exploration',
+        type: 'passive',
+        effect: 'exploration_heal',
+        value: 10
+    }
+};
+
+// Crafting System
+const craftingRecipes = {
+    // Weapons
+    iron_blade: {
+        name: 'Iron Blade',
+        type: 'weapon',
+        rarity: 'common',
+        attack: 18,
+        materials: {
+            'Cave Minerals': 3,
+            'Iron Ore': 2
+        },
+        requiredLevel: 3,
+        description: 'A sturdy iron sword with improved sharpness',
+        category: 'weapons'
+    },
+    mystic_staff: {
+        name: 'Mystic Staff',
+        type: 'weapon',
+        rarity: 'uncommon',
+        attack: 15,
+        manaBonus: 20,
+        materials: {
+            'Mystical Herbs': 4,
+            'Elven Wood': 3,
+            'Forest Essence': 2
+        },
+        requiredLevel: 5,
+        description: 'A magical staff that enhances spell power',
+        category: 'weapons'
+    },
+    dragon_fang_sword: {
+        name: 'Dragon Fang Sword',
+        type: 'weapon',
+        rarity: 'rare',
+        attack: 35,
+        critBonus: 15,
+        materials: {
+            'Dragon Scales': 5,
+            'Ancient Artifacts': 2,
+            'Storm Essence': 3
+        },
+        requiredLevel: 10,
+        description: 'A legendary blade forged from dragon materials',
+        category: 'weapons'
+    },
+
+    // Armor
+    crystal_mail: {
+        name: 'Crystal Mail',
+        type: 'armor',
+        rarity: 'uncommon',
+        defense: 12,
+        hpBonus: 30,
+        materials: {
+            'Rare Crystals': 4,
+            'Cave Minerals': 6,
+            'Glowing Gems': 2
+        },
+        requiredLevel: 4,
+        description: 'Armor infused with protective crystal magic',
+        category: 'armor'
+    },
+    shadow_cloak: {
+        name: 'Shadow Cloak',
+        type: 'armor',
+        rarity: 'rare',
+        defense: 8,
+        dodgeBonus: 20,
+        stealthBonus: true,
+        materials: {
+            'Cursed Moss': 6,
+            'Witch\'s Brew': 3,
+            'Swamp Gas': 4
+        },
+        requiredLevel: 7,
+        description: 'A mysterious cloak that bends light and shadow',
+        category: 'armor'
+    },
+
+    // Consumables
+    super_health_potion: {
+        name: 'Super Health Potion',
+        type: 'consumable',
+        rarity: 'common',
+        effect: 'heal',
+        value: 100,
+        materials: {
+            'Mystical Herbs': 2,
+            'Pure Water': 1
+        },
+        requiredLevel: 2,
+        description: 'A potent healing potion that restores 100 HP',
+        category: 'consumables'
+    },
+    mana_elixir: {
+        name: 'Mana Elixir',
+        type: 'consumable',
+        rarity: 'uncommon',
+        effect: 'mana',
+        value: 50,
+        materials: {
+            'Forest Essence': 3,
+            'Glowing Gems': 2,
+            'Pure Water': 1
+        },
+        requiredLevel: 4,
+        description: 'Restores mana and temporarily increases max mana by 20',
+        category: 'consumables'
+    },
+    strength_brew: {
+        name: 'Strength Brew',
+        type: 'consumable',
+        rarity: 'rare',
+        effect: 'buff',
+        value: { attack: 10, duration: 5 },
+        materials: {
+            'Dragon Scales': 2,
+            'Mountain Stone': 4,
+            'Ancient Artifacts': 1
+        },
+        requiredLevel: 8,
+        description: 'Temporarily increases attack by 10 for 5 battles',
+        category: 'consumables'
+    },
+
+    // Special Items
+    pet_treat: {
+        name: 'Magical Pet Treat',
+        type: 'pet_item',
+        rarity: 'uncommon',
+        effect: 'loyalty',
+        value: 25,
+        materials: {
+            'Mystical Herbs': 2,
+            'Trade Goods': 3,
+            'Local Currency': 5
+        },
+        requiredLevel: 3,
+        description: 'Increases pet loyalty by 25 points',
+        category: 'pet_items'
+    },
+    exploration_kit: {
+        name: 'Advanced Exploration Kit',
+        type: 'utility',
+        rarity: 'rare',
+        effect: 'exploration_bonus',
+        value: 0.2, // 20% better exploration outcomes
+        materials: {
+            'Crafting Materials': 8,
+            'Trade Goods': 6,
+            'Rope': 4,
+            'Compass': 1
+        },
+        requiredLevel: 6,
+        description: 'Improves exploration success rates by 20% for 10 explorations',
+        category: 'utility'
+    }
+};
+
+// Common crafting materials that can be found
+const craftingMaterials = {
+    'Iron Ore': { description: 'Raw iron for weapon crafting', rarity: 'common' },
+    'Pure Water': { description: 'Clean water for potion brewing', rarity: 'common' },
+    'Rope': { description: 'Strong rope for equipment', rarity: 'common' },
+    'Compass': { description: 'Navigation tool', rarity: 'uncommon' }
+};
+
+// Random Events System
+const randomEvents = {
+    mysterious_merchant: {
+        name: 'Mysterious Merchant',
+        emoji: '🧙‍♂️',
+        description: 'A hooded figure offers to trade rare items',
+        chance: 0.03, // 3% chance
+        type: 'choice',
+        minLevel: 2,
+        locations: ['village', 'forest', 'cave'],
+        choices: [
+            {
+                text: 'Trade 100 gold for a rare item',
+                cost: { gold: 100 },
+                reward: { type: 'random_equipment', rarity: 'rare' },
+                requirementText: 'Requires 100 gold'
+            },
+            {
+                text: 'Trade resources for magical knowledge',
+                cost: { resources: 3 },
+                reward: { type: 'skill_unlock' },
+                requirementText: 'Requires 3 random resources'
+            },
+            {
+                text: 'Politely decline and walk away',
+                cost: {},
+                reward: { type: 'nothing' },
+                requirementText: 'No cost, no reward'
+            }
+        ]
+    },
+
+    ancient_shrine: {
+        name: 'Ancient Shrine',
+        emoji: '⛩️',
+        description: 'You discover a mystical shrine emanating powerful energy',
+        chance: 0.025, // 2.5% chance
+        type: 'choice',
+        minLevel: 5,
+        locations: ['forest', 'mountain', 'ruins'],
+        choices: [
+            {
+                text: 'Offer 50 gold as tribute',
+                cost: { gold: 50 },
+                reward: { type: 'blessing', effect: 'hp_boost', value: 50 },
+                requirementText: 'Permanently increases max HP by 50'
+            },
+            {
+                text: 'Pray for strength (costs mana)',
+                cost: { mana: 30 },
+                reward: { type: 'blessing', effect: 'attack_boost', value: 5 },
+                requirementText: 'Permanently increases attack by 5'
+            },
+            {
+                text: 'Leave the shrine untouched',
+                cost: {},
+                reward: { type: 'safe' },
+                requirementText: 'Safe choice, no risk or reward'
+            }
+        ]
+    },
+
+    cursed_treasure: {
+        name: 'Cursed Treasure Chest',
+        emoji: '📦',
+        description: 'A treasure chest glows with ominous energy...',
+        chance: 0.04, // 4% chance
+        type: 'risk_reward',
+        minLevel: 3,
+        locations: ['cave', 'swamp', 'ruins', 'desert'],
+        outcomes: [
+            {
+                chance: 0.6,
+                result: 'success',
+                reward: { gold: [100, 300], items: ['Cursed Gem', 'Dark Crystal'] },
+                message: 'You carefully open the chest and claim its treasures!'
+            },
+            {
+                chance: 0.3,
+                result: 'curse',
+                penalty: { hp_drain: 20, curse_duration: 3 },
+                message: 'The chest was trapped! A curse drains your strength...'
+            },
+            {
+                chance: 0.1,
+                result: 'mimic',
+                enemy: 'Treasure Mimic',
+                message: 'The chest suddenly grows teeth and attacks!'
+            }
+        ]
+    },
+
+    wandering_scholar: {
+        name: 'Wandering Scholar',
+        emoji: '👨‍🏫',
+        description: 'A learned scholar shares ancient wisdom',
+        chance: 0.035, // 3.5% chance
+        type: 'beneficial',
+        minLevel: 4,
+        locations: ['village', 'ruins', 'castle'],
+        outcomes: [
+            {
+                chance: 0.4,
+                reward: { xp: [50, 150] },
+                message: 'The scholar teaches you ancient combat techniques! +XP'
+            },
+            {
+                chance: 0.3,
+                reward: { skill_point: 1 },
+                message: 'You learn a new skill from the scholar\'s teachings!'
+            },
+            {
+                chance: 0.3,
+                reward: { recipe_unlock: 'random' },
+                message: 'The scholar shares a secret crafting recipe with you!'
+            }
+        ]
+    },
+
+    magical_portal: {
+        name: 'Unstable Magic Portal',
+        emoji: '🌀',
+        description: 'A swirling portal of magical energy appears before you',
+        chance: 0.02, // 2% chance
+        type: 'teleport',
+        minLevel: 6,
+        locations: ['ruins', 'mountain', 'desert'],
+        outcomes: [
+            {
+                chance: 0.5,
+                result: 'beneficial_teleport',
+                reward: { location_unlock: 'random', items: ['Teleport Crystal'] },
+                message: 'The portal transports you to a new realm! New location discovered!'
+            },
+            {
+                chance: 0.3,
+                result: 'neutral_teleport',
+                effect: { random_location: true },
+                message: 'You are randomly teleported to another location!'
+            },
+            {
+                chance: 0.2,
+                result: 'dangerous_teleport',
+                penalty: { hp_loss: 30, mana_loss: 20 },
+                message: 'The unstable portal damages you during transport!'
+            }
+        ]
+    },
+
+    fairy_ring: {
+        name: 'Fairy Ring',
+        emoji: '🍄',
+        description: 'You find a circle of magical mushrooms',
+        chance: 0.03, // 3% chance
+        type: 'pet_event',
+        minLevel: 2,
+        locations: ['forest', 'swamp'],
+        outcomes: [
+            {
+                chance: 0.4,
+                reward: { pet_loyalty: 15, all_pets: true },
+                message: 'The fairy magic increases all your pets\' loyalty!'
+            },
+            {
+                chance: 0.3,
+                reward: { pet_xp: 100, active_pet: true },
+                message: 'Your active pet gains experience from fairy magic!'
+            },
+            {
+                chance: 0.2,
+                reward: { pet_find_chance: 0.1 },
+                message: 'The fairies bless you! Next pet encounter chance increased!'
+            },
+            {
+                chance: 0.1,
+                reward: { rare_pet_encounter: true },
+                message: 'A rare magical creature is attracted by the fairy ring!'
+            }
+        ]
+    },
+
+    time_rift: {
+        name: 'Temporal Rift',
+        emoji: '⏰',
+        description: 'Time itself seems unstable in this area...',
+        chance: 0.015, // 1.5% chance (very rare)
+        type: 'special',
+        minLevel: 8,
+        locations: ['ruins', 'mountain'],
+        outcomes: [
+            {
+                chance: 0.4,
+                result: 'experience_boost',
+                reward: { xp_multiplier: 2.0, duration: 5 },
+                message: 'Time acceleration! Double XP for next 5 battles!'
+            },
+            {
+                chance: 0.3,
+                result: 'skill_cooldown_reset',
+                reward: { reset_cooldowns: true },
+                message: 'Time rewinds! All skill cooldowns are reset!'
+            },
+            {
+                chance: 0.2,
+                result: 'age_backwards',
+                reward: { level_up_discount: 0.5 },
+                message: 'You feel younger! Next level requires 50% less XP!'
+            },
+            {
+                chance: 0.1,
+                result: 'time_loop',
+                penalty: { repeat_last_battle: true },
+                message: 'Time loops! You must repeat your last battle...'
+            }
+        ]
     }
 };
 
@@ -947,6 +1600,134 @@ const skills = {
         manaCost: 35,
         cooldown: 10,
         effect: 'ultimate_stealth'
+    },
+
+    // Advanced Combat Skills (unlocked at higher levels)
+    weapon_mastery: {
+        name: '⚔️ Weapon Mastery',
+        description: 'Passive: +15% critical hit chance',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_crit_boost',
+        type: 'passive',
+        unlockLevel: 8
+    },
+    armor_expertise: {
+        name: '🛡️ Armor Expertise',
+        description: 'Passive: Reduce all damage by 20%',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_damage_reduction',
+        type: 'passive',
+        unlockLevel: 10
+    },
+    mana_efficiency: {
+        name: '🔮 Mana Efficiency',
+        description: 'Passive: All skills cost 25% less mana',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_mana_reduction',
+        type: 'passive',
+        unlockLevel: 12
+    },
+    battle_reflexes: {
+        name: '💨 Battle Reflexes',
+        description: 'Passive: +20% dodge chance and first strike in combat',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_reflexes',
+        type: 'passive',
+        unlockLevel: 15
+    },
+
+    // Exploration and Utility Skills
+    treasure_hunter: {
+        name: '💎 Treasure Hunter',
+        description: 'Passive: +30% better treasure find rates',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_treasure_bonus',
+        type: 'passive',
+        unlockLevel: 6
+    },
+    resourceful: {
+        name: '🌿 Resourceful',
+        description: 'Passive: +25% more resources from exploration',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_resource_bonus',
+        type: 'passive',
+        unlockLevel: 7
+    },
+    beast_whisperer: {
+        name: '🐾 Beast Whisperer',
+        description: 'Passive: Pets gain loyalty faster and find rate +50%',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_pet_bonus',
+        type: 'passive',
+        unlockLevel: 9
+    },
+    ancient_knowledge: {
+        name: '📚 Ancient Knowledge',
+        description: 'Passive: +40% XP gain and unlock advanced recipes',
+        manaCost: 0,
+        cooldown: 0,
+        effect: 'passive_xp_bonus',
+        type: 'passive',
+        unlockLevel: 11
+    },
+
+    // Elemental Skills (available to all classes at high levels)
+    lightning_bolt: {
+        name: '⚡ Lightning Bolt',
+        description: 'Fast electric attack that can chain to other enemies',
+        manaCost: 18,
+        cooldown: 3,
+        effect: 'lightning_damage',
+        unlockLevel: 13
+    },
+    ice_shard: {
+        name: '🧊 Ice Shard',
+        description: 'Freezes enemy, reducing their speed for 2 turns',
+        manaCost: 16,
+        cooldown: 4,
+        effect: 'ice_damage_slow',
+        unlockLevel: 14
+    },
+    earth_spike: {
+        name: '🪨 Earth Spike',
+        description: 'Rock attack that can stun enemies',
+        manaCost: 20,
+        cooldown: 5,
+        effect: 'earth_damage_stun',
+        unlockLevel: 16
+    },
+
+    // Master Skills (very high level)
+    time_manipulation: {
+        name: '⏰ Time Manipulation',
+        description: 'Reset all cooldowns and gain extra turn',
+        manaCost: 50,
+        cooldown: 15,
+        effect: 'time_magic',
+        unlockLevel: 18
+    },
+    divine_intervention: {
+        name: '✨ Divine Intervention',
+        description: 'Fully heal and become immune for 1 turn',
+        manaCost: 60,
+        cooldown: 20,
+        effect: 'divine_heal',
+        unlockLevel: 20
+    },
+    reality_break: {
+        name: '🌌 Reality Break',
+        description: 'Ultimate: Deal 1000% damage, ignoring all defenses',
+        manaCost: 80,
+        cooldown: 25,
+        effect: 'reality_damage',
+        unlockLevel: 25
     }
 };
 
@@ -1087,6 +1868,584 @@ const achievements = [
     { id: 'quest_master', name: 'Quest Master', description: 'Complete 5 quests', reward: 400 },
     { id: 'location_master', name: 'Location Master', description: 'Unlock all locations', reward: 800 }
 ];
+
+// Weather System Functions
+function getCurrentWeather(state) {
+    return weatherTypes[state.currentWeather] || weatherTypes.clear;
+}
+
+function updateWeather(state) {
+    state.weatherChangeTimer = (state.weatherChangeTimer || 0) + 1;
+
+    if (state.weatherChangeTimer >= state.weatherDuration) {
+        state.weatherChangeTimer = 0;
+        state.currentWeather = selectRandomWeather();
+
+        const weather = getCurrentWeather(state);
+        showMessage(`🌤️ Weather changed to: ${weather.emoji} ${weather.name}`, 'info');
+
+        return true; // Weather changed
+    }
+    return false; // No change
+}
+
+function selectRandomWeather() {
+    const rand = Math.random();
+    let cumulativeProbability = 0;
+
+    for (const [weatherType, data] of Object.entries(weatherTypes)) {
+        cumulativeProbability += data.rarity;
+        if (rand <= cumulativeProbability) {
+            return weatherType;
+        }
+    }
+
+    return 'clear'; // Fallback
+}
+
+function applyWeatherEffects(baseValue, effectType, state) {
+    const weather = getCurrentWeather(state);
+    const effect = weather.effects[effectType] || 1.0;
+    return Math.floor(baseValue * effect);
+}
+
+function getWeatherDescription(state) {
+    const weather = getCurrentWeather(state);
+    return `${weather.emoji} ${weather.name}: ${weather.description}`;
+}
+
+// Pet System Functions
+function tryFindPet(state, currentLocation) {
+    // Check if player can find pets in this location
+    const availablePets = Object.entries(petTypes).filter(([, petData]) => {
+        return petData.locations.includes(currentLocation) &&
+               state.level >= petData.unlockLevel &&
+               !state.pets.some(pet => pet.type === petData.name);
+    });
+
+    if (availablePets.length === 0) return null;
+
+    // Check each pet's individual find chance
+    for (const [petKey, petData] of availablePets) {
+        if (Math.random() < petData.findChance) {
+            return createNewPet(petKey, petData);
+        }
+    }
+
+    return null;
+}
+
+function createNewPet(petKey, petData) {
+    return {
+        id: Date.now() + Math.random(), // Unique ID
+        type: petKey,
+        name: petData.name,
+        emoji: petData.emoji,
+        level: 1,
+        xp: 0,
+        xpNeeded: 100,
+        loyalty: petData.baseStats.loyalty,
+        maxLoyalty: 100,
+        health: petData.baseStats.health,
+        maxHealth: petData.baseStats.health,
+        attack: petData.baseStats.attack,
+        defense: petData.baseStats.defense,
+        abilities: [...petData.abilities],
+        rarity: petData.rarity,
+        description: petData.description,
+        isActive: false
+    };
+}
+
+function levelUpPet(pet) {
+    const petData = petTypes[pet.type];
+    if (!petData || pet.level >= petData.maxLevel) return false;
+
+    pet.level++;
+    pet.xp = 0;
+    pet.xpNeeded = Math.floor(pet.xpNeeded * petData.growthRate);
+
+    // Stat increases
+    pet.maxHealth += Math.floor(petData.baseStats.health * 0.2);
+    pet.health = pet.maxHealth; // Full heal on level up
+    pet.attack += Math.floor(petData.baseStats.attack * 0.15);
+    pet.defense += Math.floor(petData.baseStats.defense * 0.15);
+    pet.maxLoyalty = Math.min(100, pet.maxLoyalty + 5);
+
+    return true;
+}
+
+function applyPetBonuses(state, bonusType, baseValue) {
+    if (!state.activePet) return baseValue;
+
+    const pet = state.pets.find(p => p.id === state.activePet);
+    if (!pet) return baseValue;
+
+    let modifier = 1.0;
+
+    pet.abilities.forEach(abilityKey => {
+        const ability = petAbilities[abilityKey];
+        if (!ability || ability.type !== 'passive') return;
+
+        switch (ability.effect) {
+        case 'treasure_bonus':
+            if (bonusType === 'treasure') modifier += ability.value;
+            break;
+        case 'xp_bonus':
+            if (bonusType === 'xp') modifier += ability.value;
+            break;
+        case 'crit_chance_increase':
+            if (bonusType === 'crit') modifier += ability.value / 100;
+            break;
+        case 'max_mana_increase':
+            if (bonusType === 'mana') modifier += ability.value;
+            break;
+        }
+    });
+
+    return Math.floor(baseValue * modifier);
+}
+
+function petPostBattleEffects(state) {
+    if (!state.activePet) return '';
+
+    const pet = state.pets.find(p => p.id === state.activePet);
+    if (!pet) return '';
+
+    let effects = '';
+
+    pet.abilities.forEach(abilityKey => {
+        const ability = petAbilities[abilityKey];
+        if (!ability || ability.type !== 'passive') return;
+
+        if (ability.effect === 'post_battle_heal') {
+            const healAmount = Math.min(ability.value, state.maxHp - state.hp);
+            if (healAmount > 0) {
+                state.hp += healAmount;
+                effects += `${pet.emoji} ${pet.name} heals you for ${healAmount} HP!\n`;
+            }
+        }
+    });
+
+    return effects;
+}
+
+function increasePetLoyalty(pet, amount = 1) {
+    pet.loyalty = Math.min(pet.maxLoyalty, pet.loyalty + amount);
+}
+
+function decreasePetLoyalty(pet, amount = 1) {
+    pet.loyalty = Math.max(0, pet.loyalty - amount);
+
+    // Pet might leave if loyalty gets too low
+    if (pet.loyalty <= 10) {
+        return true; // Pet wants to leave
+    }
+    return false;
+}
+
+// Crafting System Functions
+function getAvailableRecipes(state) {
+    return Object.entries(craftingRecipes).filter(([, recipe]) => {
+        return state.level >= recipe.requiredLevel;
+    });
+}
+
+function canCraftItem(state, recipeKey) {
+    const recipe = craftingRecipes[recipeKey];
+    if (!recipe || state.level < recipe.requiredLevel) {
+        return { canCraft: false, reason: 'Level too low or recipe not found' };
+    }
+
+    const inventory = state.inventory || [];
+    const missing = [];
+
+    for (const [materialName, needed] of Object.entries(recipe.materials)) {
+        const owned = inventory.find(item => item.name === materialName)?.quantity || 0;
+        if (owned < needed) {
+            missing.push(`${materialName} (${owned}/${needed})`);
+        }
+    }
+
+    if (missing.length > 0) {
+        return { canCraft: false, reason: `Missing: ${missing.join(', ')}` };
+    }
+
+    return { canCraft: true, reason: 'All materials available' };
+}
+
+function craftItem(state, recipeKey) {
+    const recipe = craftingRecipes[recipeKey];
+    const { canCraft, reason } = canCraftItem(state, recipeKey);
+
+    if (!canCraft) {
+        return { success: false, message: `Cannot craft: ${reason}` };
+    }
+
+    // Remove materials from inventory
+    const inventory = state.inventory || [];
+    for (const [materialName, needed] of Object.entries(recipe.materials)) {
+        const item = inventory.find(item => item.name === materialName);
+        if (item) {
+            item.quantity -= needed;
+            if (item.quantity <= 0) {
+                const index = inventory.indexOf(item);
+                inventory.splice(index, 1);
+            }
+        }
+    }
+
+    // Create the crafted item
+    const craftedItem = {
+        name: recipe.name,
+        type: recipe.type,
+        rarity: recipe.rarity,
+        description: recipe.description,
+        crafted: true,
+        ...recipe
+    };
+
+    // Add to inventory or equip if it's better
+    if (recipe.type === 'weapon' || recipe.type === 'armor') {
+        const currentEquipment = state.equipment?.[recipe.type];
+        const isUpgrade = !currentEquipment ||
+                         (recipe.attack && recipe.attack > (currentEquipment.attack || 0)) ||
+                         (recipe.defense && recipe.defense > (currentEquipment.defense || 0));
+
+        if (isUpgrade) {
+            // Auto-equip if it's better
+            state.equipment = state.equipment || {};
+            state.equipment[recipe.type] = craftedItem;
+
+            // Apply stat bonuses
+            if (recipe.attack) state.attack = (state.attack || 15) + (recipe.attack - (currentEquipment?.attack || 0));
+            if (recipe.defense) state.defense = (state.defense || 5) + (recipe.defense - (currentEquipment?.defense || 0));
+            if (recipe.manaBonus) state.maxMana = (state.maxMana || 50) + recipe.manaBonus;
+            if (recipe.hpBonus) {
+                state.maxHp += recipe.hpBonus;
+                state.hp += recipe.hpBonus; // Bonus HP when equipped
+            }
+
+            return {
+                success: true,
+                message: `✨ Crafted and equipped ${recipe.name}!`,
+                equipped: true
+            };
+        } else {
+            inventory.push(craftedItem);
+            return {
+                success: true,
+                message: `🔨 Crafted ${recipe.name}! Added to inventory.`,
+                equipped: false
+            };
+        }
+    } else {
+        // Consumables and other items go to inventory
+        inventory.push(craftedItem);
+        return {
+            success: true,
+            message: `🔨 Crafted ${recipe.name}! Added to inventory.`,
+            equipped: false
+        };
+    }
+}
+
+function useCraftedItem(state, itemName) {
+    const inventory = state.inventory || [];
+    const item = inventory.find(i => i.name === itemName && i.crafted);
+
+    if (!item) {
+        return { success: false, message: 'Item not found' };
+    }
+
+    const result = { success: true, message: '' };
+
+    switch (item.effect) {
+    case 'heal':
+        const healAmount = Math.min(item.value, state.maxHp - state.hp);
+        state.hp += healAmount;
+        result.message = `Restored ${healAmount} HP!`;
+        break;
+
+    case 'mana':
+        const manaAmount = Math.min(item.value, state.maxMana - state.mana);
+        state.mana += manaAmount;
+        state.maxMana += 20; // Temporary bonus
+        result.message = `Restored ${manaAmount} mana and increased max mana by 20!`;
+        break;
+
+    case 'loyalty':
+        if (state.activePet && state.pets) {
+            const pet = state.pets.find(p => p.id === state.activePet);
+            if (pet) {
+                pet.loyalty = Math.min(pet.maxLoyalty, pet.loyalty + item.value);
+                result.message = `${pet.name} loyalty increased by ${item.value}!`;
+            } else {
+                return { success: false, message: 'No active pet to feed' };
+            }
+        } else {
+            return { success: false, message: 'No active pet to feed' };
+        }
+        break;
+
+    case 'buff':
+        // Apply temporary buff (implementation depends on battle system)
+        state.temporaryBuffs = state.temporaryBuffs || {};
+        state.temporaryBuffs.attack = (state.temporaryBuffs.attack || 0) + item.value.attack;
+        state.temporaryBuffs.duration = item.value.duration;
+        result.message = `Attack increased by ${item.value.attack} for ${item.value.duration} battles!`;
+        break;
+
+    default:
+        return { success: false, message: 'Unknown item effect' };
+    }
+
+    // Remove item from inventory (consumables are used up)
+    const index = inventory.indexOf(item);
+    inventory.splice(index, 1);
+
+    return result;
+}
+
+// Random Events System Functions
+function tryTriggerRandomEvent(state, currentLocation) {
+    // Check if a random event should occur (small chance)
+    const eventChance = Math.random();
+    if (eventChance > 0.08) return null; // 8% chance for any event
+
+    // Filter events by location and level
+    const availableEvents = Object.entries(randomEvents).filter(([, event]) => {
+        return event.locations.includes(currentLocation) &&
+               state.level >= event.minLevel &&
+               Math.random() < event.chance;
+    });
+
+    if (availableEvents.length === 0) return null;
+
+    // Pick a random available event
+    const [eventKey, eventData] = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+    return { key: eventKey, data: eventData };
+}
+
+function processRandomEvent(state, eventKey, eventData, choice = null) {
+    let message = `✨ RANDOM EVENT ✨\n\n${eventData.emoji} ${eventData.name}\n\n${eventData.description}\n\n`;
+
+    switch (eventData.type) {
+    case 'choice':
+        if (choice === null) {
+            // Present choices to player
+            message += 'What do you do?\n\n';
+            eventData.choices.forEach((choiceOption, index) => {
+                message += `${index + 1}. ${choiceOption.text}\n`;
+                message += `   ${choiceOption.requirementText}\n\n`;
+            });
+            return { type: 'choice', message, choices: eventData.choices };
+        } else {
+            // Process chosen option
+            const chosenOption = eventData.choices[choice];
+            return processEventChoice(state, chosenOption, message);
+        }
+
+    case 'risk_reward':
+        return processRiskRewardEvent(state, eventData, message);
+
+    case 'beneficial':
+        return processBeneficialEvent(state, eventData, message);
+
+    case 'teleport':
+        return processTeleportEvent(state, eventData, message);
+
+    case 'pet_event':
+        return processPetEvent(state, eventData, message);
+
+    case 'special':
+        return processSpecialEvent(state, eventData, message);
+
+    default:
+        return { type: 'message', message: message + 'Something strange happens...' };
+    }
+}
+
+function processEventChoice(state, choice, baseMessage) {
+    let message = baseMessage;
+    let canAfford = true;
+
+    // Check if player can afford the choice
+    if (choice.cost.gold && state.gold < choice.cost.gold) {
+        canAfford = false;
+        message += `❌ You need ${choice.cost.gold} gold but only have ${state.gold}.`;
+    }
+
+    if (choice.cost.mana && state.mana < choice.cost.mana) {
+        canAfford = false;
+        message += `❌ You need ${choice.cost.mana} mana but only have ${state.mana}.`;
+    }
+
+    if (choice.cost.resources) {
+        const inventory = state.inventory || [];
+        const resourceCount = inventory.filter(item => item.type === 'resource').length;
+        if (resourceCount < choice.cost.resources) {
+            canAfford = false;
+            message += `❌ You need ${choice.cost.resources} resources but only have ${resourceCount}.`;
+        }
+    }
+
+    if (!canAfford) {
+        return { type: 'message', message };
+    }
+
+    // Deduct costs
+    if (choice.cost.gold) state.gold -= choice.cost.gold;
+    if (choice.cost.mana) state.mana -= choice.cost.mana;
+    if (choice.cost.resources) {
+        // Remove random resources
+        const inventory = state.inventory || [];
+        const resources = inventory.filter(item => item.type === 'resource');
+        for (let i = 0; i < choice.cost.resources && resources.length > 0; i++) {
+            const randomResource = resources[Math.floor(Math.random() * resources.length)];
+            randomResource.quantity = (randomResource.quantity || 1) - 1;
+            if (randomResource.quantity <= 0) {
+                const index = inventory.indexOf(randomResource);
+                inventory.splice(index, 1);
+            }
+            resources.splice(resources.indexOf(randomResource), 1);
+        }
+    }
+
+    // Apply rewards
+    message += applyEventReward(state, choice.reward);
+
+    return { type: 'message', message };
+}
+
+function applyEventReward(state, reward) {
+    let rewardMessage = '';
+
+    switch (reward.type) {
+    case 'nothing':
+        rewardMessage = 'You walk away safely.';
+        break;
+
+    case 'blessing':
+        if (reward.effect === 'hp_boost') {
+            state.maxHp += reward.value;
+            state.hp += reward.value;
+            rewardMessage = `🙏 The shrine blesses you! +${reward.value} max HP permanently!`;
+        } else if (reward.effect === 'attack_boost') {
+            state.attack += reward.value;
+            rewardMessage = `⚔️ The shrine strengthens you! +${reward.value} attack permanently!`;
+        }
+        break;
+
+    case 'random_equipment':
+        const rarityItems = equipment.weapons.filter(item => item.rarity === reward.rarity)
+            .concat(equipment.armor.filter(item => item.rarity === reward.rarity));
+        if (rarityItems.length > 0) {
+            const randomItem = rarityItems[Math.floor(Math.random() * rarityItems.length)];
+            state.inventory = state.inventory || [];
+            state.inventory.push(randomItem);
+            rewardMessage = `🎁 The merchant gives you: ${randomItem.name}!`;
+        }
+        break;
+
+    case 'skill_unlock':
+        // Unlock a random skill (implementation depends on skill system)
+        rewardMessage = '📚 You learn ancient knowledge! (Skill system enhancement needed)';
+        break;
+
+    default:
+        rewardMessage = '✨ Something magical happens!';
+    }
+
+    return rewardMessage;
+}
+
+function processRiskRewardEvent(state, eventData, baseMessage) {
+    const roll = Math.random();
+    let cumulativeChance = 0;
+
+    for (const outcome of eventData.outcomes) {
+        cumulativeChance += outcome.chance;
+        if (roll <= cumulativeChance) {
+            let message = baseMessage + outcome.message + '\n\n';
+
+            if (outcome.result === 'success' && outcome.reward) {
+                if (outcome.reward.gold) {
+                    const goldAmount = Array.isArray(outcome.reward.gold)
+                        ? Math.floor(Math.random() * (outcome.reward.gold[1] - outcome.reward.gold[0])) + outcome.reward.gold[0]
+                        : outcome.reward.gold;
+                    state.gold += goldAmount;
+                    message += `💰 +${goldAmount} gold!\n`;
+                }
+
+                if (outcome.reward.items) {
+                    state.inventory = state.inventory || [];
+                    outcome.reward.items.forEach(itemName => {
+                        state.inventory.push({ name: itemName, type: 'treasure', rarity: 'rare' });
+                        message += `🎁 Found: ${itemName}!\n`;
+                    });
+                }
+            } else if (outcome.result === 'curse' && outcome.penalty) {
+                if (outcome.penalty.hp_drain) {
+                    state.hp = Math.max(1, state.hp - outcome.penalty.hp_drain);
+                    message += `💀 Lost ${outcome.penalty.hp_drain} HP!\n`;
+                }
+
+                if (outcome.penalty.curse_duration) {
+                    state.cursed = outcome.penalty.curse_duration;
+                    message += `😈 Cursed for ${outcome.penalty.curse_duration} explorations!\n`;
+                }
+            } else if (outcome.result === 'mimic') {
+                // Trigger a battle with mimic
+                message += '⚔️ Prepare for battle!';
+                // This would need integration with the battle system
+            }
+
+            return { type: 'message', message };
+        }
+    }
+
+    return { type: 'message', message: baseMessage + 'Nothing happens...' };
+}
+
+function processBeneficialEvent(state, eventData, baseMessage) {
+    const roll = Math.random();
+    let cumulativeChance = 0;
+
+    for (const outcome of eventData.outcomes) {
+        cumulativeChance += outcome.chance;
+        if (roll <= cumulativeChance) {
+            let message = baseMessage + outcome.message + '\n\n';
+
+            if (outcome.reward.xp) {
+                const xpAmount = Array.isArray(outcome.reward.xp)
+                    ? Math.floor(Math.random() * (outcome.reward.xp[1] - outcome.reward.xp[0])) + outcome.reward.xp[0]
+                    : outcome.reward.xp;
+                state.xp += xpAmount;
+                message += `✨ +${xpAmount} XP!`;
+            }
+
+            return { type: 'message', message };
+        }
+    }
+
+    return { type: 'message', message: baseMessage + 'The scholar nods and continues on his way.' };
+}
+
+function processTeleportEvent(state, eventData, baseMessage) {
+    // Implementation for teleport events
+    return { type: 'message', message: baseMessage + 'The portal shimmers and fades away...' };
+}
+
+function processPetEvent(state, eventData, baseMessage) {
+    // Implementation for pet-related events
+    return { type: 'message', message: baseMessage + 'The magical energy affects your companions...' };
+}
+
+function processSpecialEvent(state, eventData, baseMessage) {
+    // Implementation for special temporal events
+    return { type: 'message', message: baseMessage + 'Time itself bends around you...' };
+}
 
 function loadGame() {
     updateGameDisplay();
@@ -1359,6 +2718,32 @@ function updateGameDisplay() {
     if (maxManaEl) maxManaEl.textContent = state.maxMana || 50;
     if (classEl) classEl.textContent = characterClasses[state.class]?.name || '🗡️ Warrior';
 
+    // Update weather display if element exists
+    const weatherEl = document.getElementById('current-weather');
+    if (weatherEl) {
+        const currentWeather = getCurrentWeather(state);
+        weatherEl.textContent = `${currentWeather.emoji} ${currentWeather.name}`;
+        weatherEl.title = currentWeather.description; // Tooltip
+    }
+
+    // Update pet display if element exists
+    const petEl = document.getElementById('active-pet');
+    if (petEl) {
+        if (state.activePet && state.pets) {
+            const activePet = state.pets.find(p => p.id === state.activePet);
+            if (activePet) {
+                petEl.textContent = `${activePet.emoji} ${activePet.name} (Lv.${activePet.level})`;
+                petEl.title = `${activePet.description} • Loyalty: ${activePet.loyalty}/${activePet.maxLoyalty}`;
+            } else {
+                petEl.textContent = 'None';
+                petEl.title = 'No active pet companion';
+            }
+        } else {
+            petEl.textContent = 'None';
+            petEl.title = 'No pets found yet';
+        }
+    }
+
     // Update battle-specific UI
     updateBattleUI(state);
 }
@@ -1432,12 +2817,20 @@ function explore() {
 
     state.explorationCount = (state.explorationCount || 0) + 1;
 
+    // Weather System - Update weather and get current conditions
+    updateWeather(state);
+    const currentWeather = getCurrentWeather(state);
+
     // Update quest progress for location exploration
     dataManager.updateQuestProgress('battle_location', { location: currentLocation });
 
-    // Check for special encounters based on location
-    const encounterChance = Math.random();
+    // Modify encounter chances based on weather
+    const baseEncounterChance = Math.random();
+    const weatherMod = currentWeather.effects.encounterRateChange || 0;
+    const encounterChance = Math.max(0, Math.min(1, baseEncounterChance + weatherMod));
+
     let message = `${locationData.message}\n\n`;
+    message += `🌤️ ${currentWeather.emoji} ${currentWeather.name}: ${currentWeather.description}\n\n`;
 
     // Special encounters (10% chance)
     if (encounterChance < 0.1 && locationData.specialEncounters.length > 0) {
@@ -1467,9 +2860,11 @@ function explore() {
                 return;
             }
         } else if (specialEncounter.type === 'resource') {
-            // Resource gathering
+            // Resource gathering (affected by weather)
             const resourceName = specialEncounter.name;
-            const resourceAmount = Math.floor(Math.random() * 3) + 1;
+            const baseAmount = Math.floor(Math.random() * 3) + 1;
+            const weatherAmount = applyWeatherEffects(baseAmount, 'resourceBonus', state);
+            const resourceAmount = Math.max(1, weatherAmount); // Minimum 1
 
             state.inventory = state.inventory || [];
             const existingResource = state.inventory.find(item => item.name === resourceName);
@@ -1485,7 +2880,12 @@ function explore() {
                 });
             }
 
-            message += `🌿 You gathered ${resourceAmount}x ${resourceName}! ${specialEncounter.description}`;
+            let weatherNote = '';
+            if (weatherAmount !== baseAmount) {
+                weatherNote = ` (${currentWeather.emoji} weather bonus!)`;
+            }
+
+            message += `🌿 You gathered ${resourceAmount}x ${resourceName}!${weatherNote} ${specialEncounter.description}`;
             dataManager.updateQuestProgress('collect_item', { item: resourceName });
         }
     }
@@ -1506,11 +2906,31 @@ function explore() {
     else {
         const treasureType = Math.random();
 
-        if (treasureType < 0.4) {
-            // Location-specific resources
+        // Check for pet encounters first (small chance)
+        const foundPet = tryFindPet(state, currentLocation);
+        if (foundPet && treasureType < 0.1) { // 10% of treasure time = 4% overall chance
+            state.pets = state.pets || [];
+            state.pets.push(foundPet);
+
+            message += `🐾 A wild ${foundPet.emoji} ${foundPet.name} appears!\n\n`;
+            message += `${foundPet.description}\n\n`;
+            message += `The ${foundPet.name} seems friendly and decides to join your adventure!\n`;
+            message += `💝 New companion added to your collection!`;
+
+            // Auto-activate if it's the first pet
+            if (state.pets.length === 1) {
+                state.activePet = foundPet.id;
+                foundPet.isActive = true;
+                message += `\n\n🌟 ${foundPet.name} is now your active companion!`;
+            }
+        } else if (treasureType < 0.4) {
+            // Location-specific resources (affected by weather)
             if (locationData.resources.length > 0) {
                 const resource = locationData.resources[Math.floor(Math.random() * locationData.resources.length)];
-                const amount = Math.floor(Math.random() * 2) + 1;
+                const baseAmount = Math.floor(Math.random() * 2) + 1;
+                const weatherAmount = applyWeatherEffects(baseAmount, 'resourceBonus', state);
+                const skillAmount = applyPassiveSkills(state, 'resources', weatherAmount);
+                const amount = Math.max(1, skillAmount);
 
                 state.inventory = state.inventory || [];
                 const existingResource = state.inventory.find(item => item.name === resource);
@@ -1526,13 +2946,26 @@ function explore() {
                     });
                 }
 
-                message += `🌿 You found ${amount}x ${resource}!`;
+                let weatherNote = '';
+                if (weatherAmount !== baseAmount) {
+                    weatherNote = ` ${currentWeather.emoji}`;
+                }
+
+                message += `🌿 You found ${amount}x ${resource}!${weatherNote}`;
                 dataManager.updateQuestProgress('collect_item', { item: resource });
             } else {
-                // Fallback to gold
-                const goldFound = Math.floor(Math.random() * 50) + 20;
+                // Fallback to gold (affected by weather and skills)
+                const baseGold = Math.floor(Math.random() * 50) + 20;
+                const weatherGold = applyWeatherEffects(baseGold, 'treasureBonus', state);
+                const skillGold = applyPassiveSkills(state, 'treasure', weatherGold);
+                const goldFound = Math.max(1, skillGold);
                 state.gold += goldFound;
-                message += `💰 You found ${goldFound} gold coins!`;
+
+                let weatherNote = '';
+                if (weatherGold !== baseGold) {
+                    weatherNote = ` ${currentWeather.emoji}`;
+                }
+                message += `💰 You found ${goldFound} gold coins!${weatherNote}`;
             }
         } else if (treasureType < 0.8) {
             // Equipment treasure
@@ -1546,10 +2979,34 @@ function explore() {
             state.inventory.push(foundEquipment);
             message += `⚔️ You found ${foundEquipment.name}! Added to inventory.`;
         } else {
-            // Gold treasure
-            const goldFound = Math.floor(Math.random() * 100) + 30;
+            // Gold treasure (affected by weather and skills)
+            const baseGold = Math.floor(Math.random() * 100) + 30;
+            const weatherGold = applyWeatherEffects(baseGold, 'treasureBonus', state);
+            const skillGold = applyPassiveSkills(state, 'treasure', weatherGold);
+            const goldFound = Math.max(1, skillGold);
             state.gold += goldFound;
-            message += `� You discovered a treasure cache with ${goldFound} gold!`;
+
+            let weatherNote = '';
+            if (weatherGold !== baseGold) {
+                weatherNote = ` ${currentWeather.emoji}`;
+            }
+            message += `💰 You discovered a treasure cache with ${goldFound} gold!${weatherNote}`;
+        }
+    }
+
+    // Check for random events (small chance after normal exploration)
+    const randomEvent = tryTriggerRandomEvent(state, currentLocation);
+    if (randomEvent) {
+        const eventResult = processRandomEvent(state, randomEvent.key, randomEvent.data);
+        if (eventResult.type === 'message') {
+            message += '\n\n' + eventResult.message;
+        } else if (eventResult.type === 'choice') {
+            // For now, auto-select a random choice (could be expanded for user input)
+            const randomChoice = Math.floor(Math.random() * eventResult.choices.length);
+            const choiceResult = processRandomEvent(state, randomEvent.key, randomEvent.data, randomChoice);
+            if (choiceResult.type === 'message') {
+                message += '\n\n' + choiceResult.message;
+            }
         }
     }
 
@@ -1631,10 +3088,16 @@ function selectRandomEncounter() {
 }
 
 function startBattle(state, enemy) {
-    // Initialize battle state
+    // Apply weather effects to enemy stats
+    const currentWeather = getCurrentWeather(state);
+    const weatherMod = currentWeather.effects.enemyDangerMod || 1.0;
+
+    // Initialize battle state with weather-modified enemy
     enemy.currentHp = enemy.hp;
     enemy.maxHp = enemy.hp;
+    enemy.attack = Math.floor(enemy.attack * weatherMod);
     enemy.statusEffects = {};
+    enemy.weatherModified = weatherMod !== 1.0; // Track if weather affected enemy
 
     state.inBattle = true;
     state.currentEnemy = enemy;
@@ -1876,14 +3339,34 @@ function endBattle(state, victory, battleLog) {
     let finalMessage = battleLog + '\n\n';
 
     if (victory) {
-        // Victory rewards
-        state.xp += enemy.xp;
+        // Victory rewards (with weather, pet, and skill effects)
+        const currentWeather = getCurrentWeather(state);
+        const weatherXp = applyWeatherEffects(enemy.xp, 'xpBonus', state);
+        const petXp = applyPetBonuses(state, 'xp', weatherXp);
+        const skillXp = applyPassiveSkills(state, 'xp', petXp);
+        const xpGained = Math.max(1, skillXp);
+
+        state.xp += xpGained;
         state.gold += enemy.gold;
 
         finalMessage += `🎉 VICTORY! 🎉\n`;
         finalMessage += `💀 Defeated ${enemy.name}!\n`;
-        finalMessage += `✨ +${enemy.xp} XP\n`;
+
+        let xpNote = '';
+        if (weatherXp !== enemy.xp) {
+            xpNote = ` ${currentWeather.emoji}`;
+        }
+        finalMessage += `✨ +${xpGained} XP${xpNote}\n`;
         finalMessage += `💰 +${enemy.gold} Gold\n`;
+
+        // Weather effect notification
+        if (enemy.weatherModified) {
+            if (currentWeather.effects.enemyDangerMod > 1.0) {
+                finalMessage += `${currentWeather.emoji} The ${currentWeather.name.toLowerCase()} made enemies stronger!\n`;
+            } else if (currentWeather.effects.enemyDangerMod < 1.0) {
+                finalMessage += `${currentWeather.emoji} The ${currentWeather.name.toLowerCase()} weakened your enemy!\n`;
+            }
+        }
 
         // Update quest progress for kill
         dataManager.updateQuestProgress('kill', { enemy: enemy.name });
@@ -1918,6 +3401,14 @@ function endBattle(state, victory, battleLog) {
         finalMessage += `💀 DEFEAT! 💀\n`;
         finalMessage += `You were defeated by ${enemy.name}!\n`;
         finalMessage += `Click 'New Game' to try again.\n`;
+    }
+
+    // Apply pet post-battle effects
+    if (victory) {
+        const petEffects = petPostBattleEffects(state);
+        if (petEffects) {
+            finalMessage += `\n${petEffects}`;
+        }
     }
 
     // Clean up battle state
@@ -1975,6 +3466,130 @@ function checkLocationUnlocks(state) {
     }
 }
 
+function checkSkillUnlocks(state) {
+    state.skills = state.skills || { available: [], cooldowns: {} };
+    const newSkills = [];
+
+    // Check all skills for unlock conditions
+    for (const [skillKey, skill] of Object.entries(skills)) {
+        // Skip if already unlocked
+        if (state.skills.available.includes(skillKey)) continue;
+
+        let canUnlock = false;
+
+        // Check level requirements
+        if (skill.unlockLevel && state.level >= skill.unlockLevel) {
+            canUnlock = true;
+        }
+
+        // Check class-specific skills
+        const classData = characterClasses[state.class];
+        if (classData && classData.skills.includes(skillKey)) {
+            canUnlock = true;
+        }
+
+        // Special unlock conditions could be added here
+        // e.g., quest completion, boss defeats, etc.
+
+        if (canUnlock) {
+            state.skills.available.push(skillKey);
+            newSkills.push(skill);
+        }
+    }
+
+    // Show notifications for new skills
+    if (newSkills.length > 0) {
+        let message = '🌟 NEW SKILLS UNLOCKED! 🌟\n\n';
+        newSkills.forEach(skill => {
+            message += `✨ ${skill.name}\n`;
+            message += `   ${skill.description}\n\n`;
+        });
+        
+        // Store message to show after level up notification
+        state.newSkillsMessage = message;
+    }
+}
+
+function applyPassiveSkills(state, bonusType, baseValue) {
+    if (!state.skills || !state.skills.available) return baseValue;
+
+    let multiplier = 1.0;
+    let flatBonus = 0;
+
+    state.skills.available.forEach(skillKey => {
+        const skill = skills[skillKey];
+        if (!skill || skill.type !== 'passive') return;
+
+        switch (skill.effect) {
+        case 'passive_crit_boost':
+            if (bonusType === 'crit_chance') flatBonus += 15;
+            break;
+        case 'passive_damage_reduction':
+            if (bonusType === 'damage_taken') multiplier *= 0.8; // 20% reduction
+            break;
+        case 'passive_treasure_bonus':
+            if (bonusType === 'treasure') multiplier += 0.3;
+            break;
+        case 'passive_resource_bonus':
+            if (bonusType === 'resources') multiplier += 0.25;
+            break;
+        case 'passive_xp_bonus':
+            if (bonusType === 'xp') multiplier += 0.4;
+            break;
+        case 'passive_mana_reduction':
+            if (bonusType === 'mana_cost') multiplier *= 0.75; // 25% reduction
+            break;
+        }
+    });
+
+    return Math.floor(baseValue * multiplier) + flatBonus;
+}
+
+function getPassiveSkillBonuses(state) {
+    if (!state.skills || !state.skills.available) return {};
+
+    const bonuses = {
+        critChance: 0,
+        damageReduction: 0,
+        treasureBonus: 0,
+        resourceBonus: 0,
+        xpBonus: 0,
+        manaCostReduction: 0,
+        dodgeBonus: 0
+    };
+
+    state.skills.available.forEach(skillKey => {
+        const skill = skills[skillKey];
+        if (!skill || skill.type !== 'passive') return;
+
+        switch (skill.effect) {
+        case 'passive_crit_boost':
+            bonuses.critChance += 15;
+            break;
+        case 'passive_damage_reduction':
+            bonuses.damageReduction += 20;
+            break;
+        case 'passive_treasure_bonus':
+            bonuses.treasureBonus += 30;
+            break;
+        case 'passive_resource_bonus':
+            bonuses.resourceBonus += 25;
+            break;
+        case 'passive_xp_bonus':
+            bonuses.xpBonus += 40;
+            break;
+        case 'passive_mana_reduction':
+            bonuses.manaCostReduction += 25;
+            break;
+        case 'passive_reflexes':
+            bonuses.dodgeBonus += 20;
+            break;
+        }
+    });
+
+    return bonuses;
+}
+
 function checkLevelUp(state) {
     let leveledUp = false;
 
@@ -1989,6 +3604,9 @@ function checkLevelUp(state) {
         state.attack += 2;
         state.defense += 1;
         state.critChance += 1;
+
+        // Check for new skill unlocks
+        checkSkillUnlocks(state);
 
         leveledUp = true;
     }
@@ -2277,6 +3895,116 @@ function showStats() {
     document.getElementById('game-image').textContent = '📊';
 }
 
+function showPets() {
+    const state = dataManager.getGameState();
+    const pets = state.pets || [];
+
+    let petsMessage = '🐾 === PET COMPANIONS === 🐾\n\n';
+
+    if (pets.length === 0) {
+        petsMessage += 'No companions yet! Explore different locations to find pets.\n\n';
+        petsMessage += '🔍 Pet Finding Tips:\n';
+        petsMessage += '• Wolf Pups can be found in Forests and Mountains\n';
+        petsMessage += '• Crystal Sprites dwell in Caves and Ruins\n';
+        petsMessage += '• Shadow Cats lurk in Swamps and Ruins\n';
+        petsMessage += '• Fire Salamanders live in Deserts and Mountains\n';
+        petsMessage += '• Ancient Turtles are extremely rare in Ruins\n\n';
+        petsMessage += 'Higher level = better chances of finding rare pets!';
+    } else {
+        const activePet = pets.find(p => p.id === state.activePet);
+        if (activePet) {
+            petsMessage += `🌟 ACTIVE COMPANION: ${activePet.emoji} ${activePet.name}\n`;
+            petsMessage += `Level ${activePet.level} • ❤️ ${activePet.loyalty}/${activePet.maxLoyalty} Loyalty\n`;
+            petsMessage += `⚔️ ${activePet.attack} ATK • 🛡️ ${activePet.defense} DEF • ❤️ ${activePet.health}/${activePet.maxHealth} HP\n\n`;
+
+            petsMessage += `📋 Abilities:\n`;
+            activePet.abilities.forEach(abilityKey => {
+                const ability = petAbilities[abilityKey];
+                if (ability) {
+                    petsMessage += `• ${ability.name}: ${ability.description}\n`;
+                }
+            });
+            petsMessage += '\n';
+        }
+
+        petsMessage += `🏠 ALL COMPANIONS (${pets.length}):\n`;
+        pets.forEach((pet, index) => {
+            const isActive = pet.id === state.activePet;
+            const status = isActive ? ' ⭐ ACTIVE' : '';
+            petsMessage += `${index + 1}. ${pet.emoji} ${pet.name} (Lv.${pet.level})${status}\n`;
+            petsMessage += `   ${pet.description}\n`;
+            petsMessage += `   Loyalty: ${pet.loyalty}/${pet.maxLoyalty} • Rarity: ${pet.rarity}\n\n`;
+        });
+
+        petsMessage += '💡 Visit locations where your pets were found to increase their loyalty!\n';
+        petsMessage += '🎯 Pets gain XP from battles and level up to become stronger!';
+    }
+
+    document.getElementById('game-message').textContent = petsMessage;
+    document.getElementById('game-image').textContent = '🐾';
+}
+
+function showCrafting() {
+    const state = dataManager.getGameState();
+    const inventory = state.inventory || [];
+
+    let craftingMessage = '🔨 === CRAFTING WORKSHOP === 🔨\n\n';
+
+    const availableRecipes = getAvailableRecipes(state);
+
+    if (availableRecipes.length === 0) {
+        craftingMessage += 'No recipes available at your current level.\n';
+        craftingMessage += 'Keep exploring and leveling up to unlock crafting recipes!';
+    } else {
+        craftingMessage += `📜 AVAILABLE RECIPES (${availableRecipes.length}):\n\n`;
+
+        availableRecipes.forEach(([recipeKey, recipe], index) => {
+            const { canCraft, reason } = canCraftItem(state, recipeKey);
+            const status = canCraft ? '✅ Ready' : '❌ Missing materials';
+
+            craftingMessage += `${index + 1}. ${recipe.name} (${recipe.rarity})\n`;
+            craftingMessage += `   ${recipe.description}\n`;
+            craftingMessage += `   Level Required: ${recipe.requiredLevel} | Status: ${status}\n`;
+
+            // Show materials needed
+            craftingMessage += `   Materials needed:\n`;
+            for (const [materialName, needed] of Object.entries(recipe.materials)) {
+                const owned = inventory.find(item => item.name === materialName)?.quantity || 0;
+                const statusSymbol = owned >= needed ? '✅' : '❌';
+                craftingMessage += `     ${statusSymbol} ${materialName}: ${owned}/${needed}\n`;
+            }
+
+            // Show item stats
+            if (recipe.attack) craftingMessage += `     ⚔️ Attack: ${recipe.attack}\n`;
+            if (recipe.defense) craftingMessage += `     🛡️ Defense: ${recipe.defense}\n`;
+            if (recipe.manaBonus) craftingMessage += `     🔮 Mana Bonus: +${recipe.manaBonus}\n`;
+            if (recipe.hpBonus) craftingMessage += `     ❤️ HP Bonus: +${recipe.hpBonus}\n`;
+            if (recipe.value) craftingMessage += `     💫 Effect: ${recipe.value}\n`;
+
+            if (!canCraft && reason !== 'All materials available') {
+                craftingMessage += `     📝 ${reason}\n`;
+            }
+
+            craftingMessage += '\n';
+        });
+
+        craftingMessage += '💡 Tip: Gather materials by exploring different locations!\n';
+        craftingMessage += '🔍 Each location offers unique resources for crafting.';
+    }
+
+    // Show current materials
+    const materials = inventory.filter(item => item.type === 'resource');
+    if (materials.length > 0) {
+        craftingMessage += '\n\n🎒 YOUR MATERIALS:\n';
+        materials.forEach(material => {
+            craftingMessage += `• ${material.name}: ${material.quantity || 1}\n`;
+        });
+    }
+
+    document.getElementById('game-message').textContent = craftingMessage;
+    document.getElementById('game-image').textContent = '🔨';
+}
+
 function resetGame() {
     if (confirm('Are you sure you want to start a new game? All progress will be lost.')) {
         dataManager.resetGame();
@@ -2417,9 +4145,12 @@ document.getElementById('inventory-btn').addEventListener('click', () => {
     showInventory(state);
 });
 document.getElementById('stats-btn').addEventListener('click', showStats);
+document.getElementById('pets-btn').addEventListener('click', showPets);
+document.getElementById('crafting-btn').addEventListener('click', showCrafting);
 document.getElementById('choose-class-btn').addEventListener('click', chooseClass);
 document.getElementById('quests-btn').addEventListener('click', showQuestDetails);
 document.getElementById('reset-game-btn').addEventListener('click', resetGame);
+document.getElementById('skills-btn-main').addEventListener('click', showSkillsOutsideBattle);
 
 // Battle action event listeners
 document.getElementById('attack-btn').addEventListener('click', () => {
@@ -2435,6 +4166,53 @@ document.getElementById('skills-btn').addEventListener('click', () => {
     showSkillMenu();
 });
 
+function showSkillsOutsideBattle() {
+    const state = dataManager.getGameState();
+    const availableSkills = state.skills?.available || [];
+    
+    if (availableSkills.length === 0) {
+        showMessage('✨ No skills learned yet! Level up and choose a class to learn skills.', 'info');
+        return;
+    }
+    
+    let message = '✨ YOUR SKILLS ✨\n\n';
+    
+    // Show passive skills
+    message += '🔮 PASSIVE ABILITIES:\n';
+    availableSkills.forEach(skillKey => {
+        const skill = skills[skillKey];
+        if (skill.type === 'passive') {
+            message += `• ${skill.name}: ${skill.description}\n`;
+        }
+    });
+    
+    message += '\n⚔️ ACTIVE SKILLS:\n';
+    availableSkills.forEach(skillKey => {
+        const skill = skills[skillKey];
+        if (skill.type === 'active') {
+            const cooldown = state.skills?.cooldowns?.[skillKey] || 0;
+            const status = cooldown > 0 ? ` (Cooldown: ${cooldown} turns)` : ' (Ready)';
+            message += `• ${skill.name}${status}: ${skill.description}\n`;
+            message += `  Mana Cost: ${skill.manaCost} | Cooldown: ${skill.cooldown} turns\n`;
+        }
+    });
+    
+    // Show passive bonuses
+    const bonuses = getPassiveSkillBonuses(state);
+    if (Object.values(bonuses).some(val => val > 0)) {
+        message += '\n🌟 CURRENT BONUSES:\n';
+        if (bonuses.critChance > 0) message += `• +${bonuses.critChance}% Critical Hit Chance\n`;
+        if (bonuses.damageReduction > 0) message += `• +${bonuses.damageReduction}% Damage Reduction\n`;
+        if (bonuses.treasureBonus > 0) message += `• +${bonuses.treasureBonus}% Treasure Value\n`;
+        if (bonuses.resourceBonus > 0) message += `• +${bonuses.resourceBonus}% Resource Collection\n`;
+        if (bonuses.xpBonus > 0) message += `• +${bonuses.xpBonus}% Experience Gain\n`;
+        if (bonuses.manaCostReduction > 0) message += `• -${bonuses.manaCostReduction}% Mana Costs\n`;
+        if (bonuses.dodgeBonus > 0) message += `• +${bonuses.dodgeBonus}% Dodge Chance\n`;
+    }
+    
+    showMessage(message, 'info');
+}
+
 function showSkillMenu() {
     const state = dataManager.getGameState();
     const availableSkills = state.skills?.available || [];
@@ -2449,7 +4227,6 @@ function showSkillMenu() {
     availableSkills.forEach((skillKey, index) => {
         const skill = skills[skillKey];
         const cooldown = state.skills?.cooldowns?.[skillKey] || 0;
-        const canUse = cooldown === 0 && state.mana >= skill.manaCost;
         const status =
             cooldown > 0 ? `(${cooldown} turns)` : state.mana < skill.manaCost ? `(${skill.manaCost} mana)` : '✅';
 
@@ -2460,7 +4237,9 @@ function showSkillMenu() {
 
     skillMessage += 'Enter 1-' + availableSkills.length + ' to use skill, or any other key to cancel:';
 
+    /* eslint-disable no-alert */
     const choice = prompt(skillMessage);
+    /* eslint-enable no-alert */
     const skillIndex = parseInt(choice) - 1;
 
     if (skillIndex >= 0 && skillIndex < availableSkills.length) {
