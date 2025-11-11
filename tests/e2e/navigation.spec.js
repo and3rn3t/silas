@@ -57,17 +57,17 @@ test.describe('Silas Anderson Website - Basic Navigation', () => {
         await expect(interestTags.first()).toBeVisible();
     });
 
-    test('should show admin/edit section', async ({ page }) => {
-        // Navigate to Admin/Edit section
-        await page.click('[data-section="admin"]');
+    test('should show login section when clicking admin nav without auth', async ({ page }) => {
+        // Click admin nav link (which should be "Login" when not authenticated)
+        await page.click('#admin-nav-link');
 
-        // Check admin section is visible
-        const adminSection = page.locator('#admin');
-        await expect(adminSection).toHaveClass(/active/);
+        // Check login section is visible (not admin, since not authenticated)
+        const loginSection = page.locator('#login');
+        await expect(loginSection).toHaveClass(/active/);
 
-        // The login form should be present within the admin section
-        const loginForm = page.locator('.login-form');
-        await expect(loginForm).toBeVisible();
+        // The login form should be present
+        const passwordInput = page.locator('#login-password');
+        await expect(passwordInput).toBeVisible();
     });
 
     test('should handle responsive design', async ({ page }) => {
