@@ -399,10 +399,15 @@ const dataManager = new DataManager();
 // Authentication
 function checkAuth() {
     const adminNavLink = document.getElementById('admin-nav-link');
+    // Always show the Edit button, but change the text based on auth status
+    adminNavLink.style.display = 'block';
+    
     if (dataManager.isAuthenticated()) {
-        adminNavLink.style.display = 'block';
+        adminNavLink.textContent = '✏️ Edit';
+        adminNavLink.setAttribute('data-section', 'admin');
     } else {
-        adminNavLink.style.display = 'none';
+        adminNavLink.textContent = '🔐 Login';
+        adminNavLink.setAttribute('data-section', 'login');
     }
 }
 
@@ -419,9 +424,10 @@ function login() {
         // Navigate to admin section
         const navLinks = document.querySelectorAll('.nav-link');
         const sections = document.querySelectorAll('.section');
+        const adminNavLink = document.getElementById('admin-nav-link');
 
         navLinks.forEach(l => l.classList.remove('active'));
-        document.querySelector('[data-section="admin"]').classList.add('active');
+        adminNavLink.classList.add('active');
 
         sections.forEach(s => s.classList.remove('active'));
         document.getElementById('admin').classList.add('active');
