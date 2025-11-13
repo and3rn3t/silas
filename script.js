@@ -3641,7 +3641,23 @@ function updateLocationSelector() {
         `;
 
         if (isUnlocked && canAccess) {
+            // Make keyboard accessible
+            locationCard.setAttribute('tabindex', '0');
+            locationCard.setAttribute('role', 'button');
+            locationCard.setAttribute('aria-label', `Select location: ${locationId}`);
+
+            // Click handler
             locationCard.addEventListener('click', () => selectLocation(locationId));
+
+            // Keyboard handler
+            locationCard.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectLocation(locationId);
+                }
+            });
+        } else {
+            locationCard.setAttribute('aria-disabled', 'true');
         }
 
         locationGrid.appendChild(locationCard);
@@ -3764,6 +3780,13 @@ function createQuestElement(quest, progress, isComplete, isAvailable) {
         ${progressText ? `<div class="quest-progress">${progressText}</div>` : ''}
         <div class="quest-rewards">${rewardsText}</div>
     `;
+
+    // Make keyboard accessible for quest items
+    if (isAvailable || progress || isComplete) {
+        questDiv.setAttribute('tabindex', '0');
+        questDiv.setAttribute('role', 'article');
+        questDiv.setAttribute('aria-label', `Quest: ${quest.name}`);
+    }
 
     return questDiv;
 }
@@ -5592,6 +5615,7 @@ function showGameModal(title, content, data = null, onConfirm = null) {
     modalTitle.textContent = title;
     modalBody.innerHTML = content;
     modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
 
     // Add click handlers to shop items if this is a shop modal
     if (content.includes('shop-interface')) {
@@ -5601,6 +5625,7 @@ function showGameModal(title, content, data = null, onConfirm = null) {
     // Close handlers
     const closeModal = () => {
         modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
         document.removeEventListener('keydown', handleModalKeydown);
     };
 
@@ -5632,14 +5657,32 @@ function showGameModal(title, content, data = null, onConfirm = null) {
 function setupShopItemHandlers() {
     const shopItems = document.querySelectorAll('.shop-item');
     shopItems.forEach(item => {
-        item.addEventListener('click', () => {
+        // Make keyboard accessible
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('role', 'option');
+
+        const selectItem = () => {
             // Remove previous selection
-            shopItems.forEach(i => i.classList.remove('selected'));
+            shopItems.forEach(i => {
+                i.classList.remove('selected');
+                i.setAttribute('aria-selected', 'false');
+            });
             // Add selection to clicked item
             item.classList.add('selected');
+            item.setAttribute('aria-selected', 'true');
 
             // Enable confirm button
             document.getElementById('modal-confirm').disabled = false;
+        };
+
+        item.addEventListener('click', selectItem);
+
+        // Keyboard handler
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                selectItem();
+            }
         });
     });
 }
@@ -5662,23 +5705,38 @@ function updateProgressBars() {
 
     // Health bar
     const healthFill = document.getElementById('health-bar-fill');
+    const healthBar = healthFill?.parentElement;
     const healthPercent = (state.hp / state.maxHp) * 100;
     if (healthFill) {
         healthFill.style.width = `${healthPercent}%`;
     }
+    if (healthBar) {
+        healthBar.setAttribute('aria-valuenow', state.hp);
+        healthBar.setAttribute('aria-valuemax', state.maxHp);
+    }
 
     // XP bar
     const xpFill = document.getElementById('xp-bar-fill');
+    const xpBar = xpFill?.parentElement;
     const xpPercent = (state.xp / state.xpNeeded) * 100;
     if (xpFill) {
         xpFill.style.width = `${xpPercent}%`;
     }
+    if (xpBar) {
+        xpBar.setAttribute('aria-valuenow', state.xp);
+        xpBar.setAttribute('aria-valuemax', state.xpNeeded);
+    }
 
     // Mana bar
     const manaFill = document.getElementById('mana-bar-fill');
+    const manaBar = manaFill?.parentElement;
     const manaPercent = (state.mana / state.maxMana) * 100;
     if (manaFill) {
         manaFill.style.width = `${manaPercent}%`;
+    }
+    if (manaBar) {
+        manaBar.setAttribute('aria-valuenow', state.mana);
+        manaBar.setAttribute('aria-valuemax', state.maxMana);
     }
 }
 
