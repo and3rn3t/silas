@@ -67,7 +67,7 @@ jobs:
         run: npx playwright test navigation.spec.js --project=chromium
 
       - name: "Upload Smoke Test Report"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-smoke
@@ -103,7 +103,7 @@ jobs:
         run: npx playwright test --project=chromium --project=firefox --project=webkit
 
       - name: "Upload Desktop E2E Report"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-desktop
@@ -139,7 +139,7 @@ jobs:
         run: npx playwright test --project="Mobile Chrome" --project="Mobile Safari"
 
       - name: "Upload Mobile E2E Report"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-mobile
